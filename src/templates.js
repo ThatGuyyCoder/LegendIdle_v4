@@ -204,7 +204,9 @@ function renderEquipmentIcon(name) {
   }
 }
 
-function layout({ title, body, user, flash, pageLayoutModifier = '' }) {
+
+function layout({ title, body, user, flash }) {
+
 
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
@@ -1201,6 +1203,7 @@ function renderGame({ user, flash }) {
           </ul>
           <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
         </section>
+
       </div>
       <aside class="game-sidebar">
         <section class="card equipment-card">
@@ -1219,14 +1222,8 @@ function renderGame({ user, flash }) {
         </section>
       </aside>
     </div>`;
+  return layout({ title: 'LegendIdle - Mäng', body, user, flash });
 
-  return layout({
-    title: 'LegendIdle - Mäng',
-    body,
-    user,
-    flash,
-    pageLayoutModifier: 'page-layout--sidebar-ready',
-  });
 }
 
 module.exports = {
