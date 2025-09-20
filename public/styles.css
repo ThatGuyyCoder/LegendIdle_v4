@@ -734,7 +734,6 @@ body.js-enabled .guest-register-enhanced-note {
 
 .game-layout {
   display: grid;
-
   gap: clamp(1.5rem, 3vw, 2.5rem);
   grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
   align-items: start;
@@ -909,7 +908,6 @@ body.js-enabled .guest-register-enhanced-note {
     order: 2;
     max-width: none;
     justify-self: stretch;
-
   }
 }
 
