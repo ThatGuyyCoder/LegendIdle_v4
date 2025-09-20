@@ -11,6 +11,7 @@ LegendIdle on RuneScape'ist inspireeritud brauserimängu varajane prototüüp. K
 - **Seansi haldus** (küpsise-põhine sessioon ning väljalogimine).
 - **MySQL-andmebaas** kasutajate, oskustaseme ja progressi salvestamiseks.
 
+
 ## Eeltingimused
 
 - Node.js 18 või uuem
@@ -89,3 +90,4 @@ CREATE TABLE user_skills (
 - UI täiendused ja responsiivsus väikeste ekraanide jaoks.
 
 See prototüüp on mõeldud ideede valideerimiseks ja edasiste arenduste planeerimiseks.
+

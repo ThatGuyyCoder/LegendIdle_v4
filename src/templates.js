@@ -137,6 +137,7 @@ function layout({ title, body, user, flash }) {
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
+
   const themeToggle = `<button type="button" class="theme-toggle" data-theme-toggle aria-label="Vaheta teemat">
     <span class="visually-hidden" data-theme-toggle-text>Vaheta teemat</span>
     <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -685,6 +686,7 @@ function layout({ title, body, user, flash }) {
 
   return `<!DOCTYPE html>
 <html lang="et" data-theme="dark">
+<html lang="et">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -702,6 +704,7 @@ function layout({ title, body, user, flash }) {
       ${themeToggle}
       ${navLinks}
     </div>
+    ${navLinks}
   </header>
   <main class="content-area">
     ${renderFlash(flash)}
