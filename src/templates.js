@@ -133,7 +133,7 @@ function renderGuestRegisterModal() {
   </div>`;
 }
 
-function layout({ title, body, user, flash }) {
+function layout({ title, body, user, flash, pageLayoutModifier }) {
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
@@ -825,6 +825,11 @@ function layout({ title, body, user, flash }) {
     })();
   </script>`;
 
+  const layoutClasses = ['page-layout'];
+  if (pageLayoutModifier) {
+    layoutClasses.push(pageLayoutModifier);
+  }
+
   return `<!DOCTYPE html>
 <html lang="et" data-theme="dark">
 <head>
@@ -845,7 +850,7 @@ function layout({ title, body, user, flash }) {
       ${navLinks}
     </div>
   </header>
-  <div class="page-layout">
+  <div class="${layoutClasses.join(' ')}">
     <main class="content-area">
       ${renderFlash(flash)}
       ${body}
@@ -1001,7 +1006,13 @@ function renderGame({ user, flash }) {
       <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
     </section>`;
 
-  return layout({ title: 'LegendIdle - Mäng', body, user, flash });
+  return layout({
+    title: 'LegendIdle - Mäng',
+    body,
+    user,
+    flash,
+    pageLayoutModifier: 'page-layout--sidebar-ready',
+  });
 }
 
 module.exports = {
