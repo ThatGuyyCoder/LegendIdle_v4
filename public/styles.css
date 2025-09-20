@@ -403,14 +403,26 @@ body:not(.js-enabled) .nav-user-divider {
   display: block;
 }
 
-.content-area {
+.page-layout {
   flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: clamp(2rem, 5vw, 3.5rem);
   padding: clamp(1rem, 4vw, 3rem);
+}
+
+.content-area {
+  flex: 0 1 860px;
   display: grid;
   gap: 1.5rem;
-  max-width: 1100px;
+  max-width: 860px;
   width: 100%;
-  margin: 0 auto;
+}
+
+.content-area > * {
+  width: 100%;
 }
 
 .hero {
