@@ -205,7 +205,6 @@ function renderEquipmentIcon(name) {
 }
 
 function layout({ title, body, user, flash, pageLayoutModifier = '' }) {
-
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
