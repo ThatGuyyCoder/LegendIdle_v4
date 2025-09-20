@@ -418,7 +418,6 @@ function layout({ title, body, user, flash }) {
 
   return `<!DOCTYPE html>
 <html lang="et" data-theme="dark">
-<html lang="et">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -436,7 +435,6 @@ function layout({ title, body, user, flash }) {
       ${themeToggle}
       ${navLinks}
     </div>
-    ${navLinks}
   </header>
   <main class="content-area">
     ${renderFlash(flash)}
