@@ -15,6 +15,10 @@ const { initDb } = require('./db');
 
 const PORT = process.env.PORT || 3000;
 const sessionStore = new Map();
+const USERNAME_RULES_MESSAGE =
+  'Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest.';
+const USERNAME_ALLOWED_PATTERN = /^[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]+$/;
+const USERNAME_LETTER_PATTERN = /[A-Za-zÀ-ÖØ-öø-ÿĀ-ž]/;
 
 function parseCookies(header) {
   if (!header) {
@@ -199,6 +203,19 @@ function isValidEmail(email) {
   return emailPattern.test(email);
 }
 
+function isValidUsername(username) {
+  if (!username) {
+    return false;
+  }
+  if (username.length < 3 || username.length > 12) {
+    return false;
+  }
+  if (!USERNAME_ALLOWED_PATTERN.test(username)) {
+    return false;
+  }
+  return USERNAME_LETTER_PATTERN.test(username);
+}
+
 async function handleRegister(req, res) {
   const body = await parseBody(req);
   const username = (body.username || '').trim();
@@ -215,6 +232,12 @@ async function handleRegister(req, res) {
 
   if (!username || !password || !email) {
     setFlash(session, 'error', 'Kasutajanimi, e-posti aadress ja parool peavad olema täidetud.');
+    redirect(res, '/');
+    return;
+  }
+
+  if (!isValidUsername(username)) {
+    setFlash(session, 'error', USERNAME_RULES_MESSAGE);
     redirect(res, '/');
     return;
   }
@@ -288,16 +311,29 @@ async function handleAvailability(res, searchParams) {
   }
 
   try {
-    const [usernameTaken, emailTaken] = await Promise.all([
-      username ? isUsernameTaken(username) : Promise.resolve(false),
-      email ? isEmailTaken(email) : Promise.resolve(false),
-    ]);
+    const usernameValid = !username || isValidUsername(username);
+    let usernameAvailable = true;
+    if (username) {
+      if (usernameValid) {
+        usernameAvailable = !(await isUsernameTaken(username));
+      } else {
+        usernameAvailable = false;
+      }
+    }
+
+    const emailAvailable = email ? !(await isEmailTaken(email)) : true;
 
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(
       JSON.stringify({
-        usernameAvailable: username ? !usernameTaken : true,
-        emailAvailable: email ? !emailTaken : true,
+        usernameAvailable,
+        emailAvailable,
+        ...(username
+          ? {
+              usernameValid,
+              usernameMessage: usernameValid ? undefined : USERNAME_RULES_MESSAGE,
+            }
+          : {}),
       })
     );
   } catch (err) {
