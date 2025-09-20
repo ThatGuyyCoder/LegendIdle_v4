@@ -1,6 +1,10 @@
 :root {
+
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color-scheme: dark;
+  color-scheme: light dark;
+  --bg: #10131a;
+  --bg-alt: #161b24;
   --accent: #f0b429;
   --accent-dark: #c78c1b;
   --text: #f5f6f8;
@@ -69,6 +73,9 @@
   --input-bg-focus: rgba(255, 255, 255, 1);
   --input-border: var(--border);
   --nav-divider: rgba(21, 40, 82, 0.16);
+  --error: #d9534f;
+  --success: #3cba92;
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 * {
@@ -78,6 +85,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+
   background: var(--body-gradient);
   background-color: var(--bg);
   color: var(--text);
@@ -96,18 +104,28 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+  background: radial-gradient(circle at top, rgba(240, 180, 41, 0.08), transparent 55%), var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+
 }
 
 .site-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   gap: clamp(1rem, 2vw, 2rem);
   padding: 1.5rem clamp(1rem, 4vw, 3rem);
   background: var(--header-gradient);
   border-bottom: 1px solid var(--border);
   color: var(--text);
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+
+  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  background: linear-gradient(135deg, rgba(240, 180, 41, 0.2), rgba(16, 19, 26, 0.8));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .site-header .brand h1 {
@@ -119,6 +137,7 @@ body {
   margin: 0.25rem 0 0;
   color: var(--muted);
 }
+
 
 .site-nav {
   display: flex;
@@ -133,6 +152,7 @@ body {
   align-items: center;
   color: var(--text);
 }
+
 
 .nav-user a {
   color: inherit;
@@ -199,6 +219,11 @@ body {
   border: 1px solid var(--border);
   box-shadow: 0 20px 40px var(--hero-shadow);
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+  background: rgba(16, 19, 26, 0.65);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
 }
 
 .hero h2 {
@@ -221,6 +246,11 @@ body {
   border: 1px solid var(--border);
   box-shadow: 0 12px 30px var(--card-shadow);
   transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+  background: rgba(16, 19, 26, 0.75);
+  border-radius: 1rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
 .card h3 {
@@ -249,6 +279,16 @@ input:focus {
   outline: 2px solid var(--focus-ring);
   border-color: var(--accent);
   background: var(--input-bg-focus);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 0.9rem;
+  background: rgba(8, 11, 18, 0.6);
+  color: var(--text);
+}
+
+input:focus {
+  outline: 2px solid rgba(240, 180, 41, 0.6);
+  border-color: var(--accent);
+  background: rgba(8, 11, 18, 0.85);
 }
 
 .password-strength {
@@ -259,6 +299,7 @@ input:focus {
   height: 0.45rem;
   border-radius: 999px;
   background: var(--border);
+  background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
   margin-bottom: 0.35rem;
 }
@@ -283,6 +324,7 @@ input:focus {
 .password-strength-text {
   font-size: 0.85rem;
   color: var(--muted);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .password-match {
@@ -290,6 +332,7 @@ input:focus {
   margin: -0.35rem 0 0.85rem;
   min-height: 1.1rem;
   color: var(--muted);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .password-match.success {
@@ -304,7 +347,11 @@ input:focus {
   font-size: 0.85rem;
   margin: 0.35rem 0 0.85rem;
   min-height: 1.1rem;
+
   color: var(--muted);
+
+  color: rgba(255, 255, 255, 0.7);
+
 }
 
 .availability-message:empty {
@@ -333,6 +380,9 @@ button {
   background: var(--button-bg);
   color: var(--text);
   transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  transition: transform 0.15s ease, background 0.15s ease;
   text-decoration: none;
 }
 
@@ -340,6 +390,7 @@ button {
 button:hover {
   transform: translateY(-1px);
   background: var(--button-bg-hover);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .button.primary {
@@ -353,6 +404,7 @@ button:hover {
 
 .button.secondary {
   background: var(--button-secondary-bg);
+  background: rgba(60, 186, 146, 0.25);
   color: var(--text);
 }
 
@@ -397,6 +449,8 @@ button:disabled {
   background: var(--surface-soft);
   border: 1px solid var(--border-subtle);
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  background: rgba(8, 11, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .skill-value {
@@ -405,6 +459,8 @@ button:disabled {
   border-radius: 999px;
   background: var(--skill-chip-bg);
   color: var(--skill-chip-text);
+  background: rgba(240, 180, 41, 0.25);
+  color: var(--accent);
   font-size: 0.85rem;
   margin-left: 0.75rem;
 }
@@ -422,14 +478,21 @@ button:disabled {
 }
 
 .flash-success {
+
   background: var(--flash-success-surface);
   border-color: var(--flash-success-border);
+
+  background: rgba(60, 186, 146, 0.15);
+  border-color: rgba(60, 186, 146, 0.4);
+
   color: var(--text);
 }
 
 .flash-error {
   background: var(--flash-error-surface);
   border-color: var(--flash-error-border);
+  background: rgba(217, 83, 79, 0.15);
+  border-color: rgba(217, 83, 79, 0.45);
   color: var(--text);
 }
 
@@ -453,6 +516,12 @@ button:disabled {
     width: 100%;
     justify-content: space-between;
   }
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(8, 11, 18, 0.8);
+}
+
+@media (max-width: 600px) {
 
   .nav-user {
     flex-direction: column;
