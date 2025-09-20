@@ -164,6 +164,21 @@ input:focus {
   color: #ff6b6b;
 }
 
+.availability-message {
+  font-size: 0.85rem;
+  margin: 0.35rem 0 0.85rem;
+  min-height: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.availability-message.success {
+  color: #4caf50;
+}
+
+.availability-message.error {
+  color: #ff6b6b;
+}
+
 .button,
 button {
   display: inline-flex;
@@ -199,6 +214,13 @@ button:hover {
 .button.secondary {
   background: rgba(60, 186, 146, 0.25);
   color: var(--text);
+}
+
+.button:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .button.small {

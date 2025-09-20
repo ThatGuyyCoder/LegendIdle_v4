@@ -51,6 +51,37 @@ async function findUser(username) {
   };
 }
 
+async function isUsernameTaken(username) {
+  if (!username) {
+    return false;
+  }
+  const pool = getPool();
+  const normalized = normalizeUsername(username);
+  const [rows] = await pool.query(
+    `SELECT 1
+     FROM users
+     WHERE normalized = ?
+     LIMIT 1`,
+    [normalized]
+  );
+  return rows.length > 0;
+}
+
+async function isEmailTaken(email) {
+  if (!email) {
+    return false;
+  }
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `SELECT 1
+     FROM users
+     WHERE email = ?
+     LIMIT 1`,
+    [email]
+  );
+  return rows.length > 0;
+}
+
 async function createUser({ username, email, passwordHash, progress }) {
   const pool = getPool();
   const normalized = normalizeUsername(username);
@@ -161,4 +192,6 @@ module.exports = {
   findUser,
   createUser,
   updateUserProgress,
+  isUsernameTaken,
+  isEmailTaken,
 };

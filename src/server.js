@@ -3,7 +3,13 @@ const path = require('path');
 const fs = require('fs/promises');
 const crypto = require('crypto');
 const { renderHome, renderGame } = require('./templates');
-const { findUser, createUser, updateUserProgress } = require('./userStore');
+const {
+  findUser,
+  createUser,
+  updateUserProgress,
+  isUsernameTaken,
+  isEmailTaken,
+} = require('./userStore');
 const { defaultProgress, cloneProgress } = require('./progress');
 const { initDb } = require('./db');
 
@@ -271,6 +277,36 @@ async function handleRegister(req, res) {
   }
 }
 
+async function handleAvailability(res, searchParams) {
+  const username = (searchParams.get('username') || '').trim();
+  const email = (searchParams.get('email') || '').trim();
+
+  if (!username && !email) {
+    res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: 'Missing username or email' }));
+    return;
+  }
+
+  try {
+    const [usernameTaken, emailTaken] = await Promise.all([
+      username ? isUsernameTaken(username) : Promise.resolve(false),
+      email ? isEmailTaken(email) : Promise.resolve(false),
+    ]);
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(
+      JSON.stringify({
+        usernameAvailable: username ? !usernameTaken : true,
+        emailAvailable: email ? !emailTaken : true,
+      })
+    );
+  } catch (err) {
+    console.error('Availability check error:', err);
+    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ error: 'Availability check failed' }));
+  }
+}
+
 async function handleLogin(req, res) {
   const body = await parseBody(req);
   const username = (body.username || '').trim();
@@ -372,6 +408,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/game') {
       const html = renderGame({ user: req.session.user || null, flash: getFlash(req.session) });
       sendHtml(res, html);
+      return;
+    }
+
+    if (req.method === 'GET' && pathname === '/availability') {
+      await handleAvailability(res, url.searchParams);
       return;
     }
 

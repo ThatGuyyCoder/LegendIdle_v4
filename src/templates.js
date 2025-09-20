@@ -31,6 +31,8 @@ function layout({ title, body, user, flash }) {
 
       const labels = { weak: 'Nõrk', medium: 'Keskmine', strong: 'Tugev' };
       const widths = { weak: '33%', medium: '66%', strong: '100%' };
+      const availabilityEndpoint = '/availability';
+      const debounceDelay = 300;
 
       function evaluateStrength(password) {
         let score = 0;
@@ -49,65 +51,222 @@ function layout({ title, body, user, flash }) {
         return 'weak';
       }
 
+      function setStatusMessage(target, status, message) {
+        if (!target) {
+          return;
+        }
+        target.textContent = message || '';
+        target.classList.remove('success', 'error');
+        if (status === 'success') {
+          target.classList.add('success');
+        } else if (status === 'error') {
+          target.classList.add('error');
+        }
+      }
+
       forms.forEach(function (form) {
         const passwordInput = form.querySelector('[data-password-input]');
         const confirmInput = form.querySelector('[data-password-confirm]');
         const strengthContainer = form.querySelector('[data-password-strength]');
-        if (!passwordInput || !strengthContainer) {
-          return;
-        }
-        const fill = strengthContainer.querySelector('.password-strength-fill');
-        const text = strengthContainer.querySelector('.password-strength-text');
         const matchText = form.querySelector('[data-password-match]');
+        const usernameInput = form.querySelector('[name="username"]');
+        const emailInput = form.querySelector('[name="email"]');
+        const usernameMessage = form.querySelector('[data-availability-username]');
+        const emailMessage = form.querySelector('[data-availability-email]');
+        const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
 
-        function updateStrength() {
-          const value = passwordInput.value || '';
-          if (!value) {
-            fill.style.width = '0';
-            fill.setAttribute('data-level', 'weak');
-            if (text) {
-              text.textContent = 'Sisesta parool, et näha tugevust';
+        if (passwordInput && strengthContainer) {
+          const fill = strengthContainer.querySelector('.password-strength-fill');
+          const text = strengthContainer.querySelector('.password-strength-text');
+
+          function updateStrength() {
+            const value = passwordInput.value || '';
+            if (!value) {
+              fill.style.width = '0';
+              fill.setAttribute('data-level', 'weak');
+              if (text) {
+                text.textContent = 'Sisesta parool, et näha tugevust';
+              }
+              return;
             }
-            return;
+            const level = evaluateStrength(value);
+            fill.style.width = widths[level] || widths.weak;
+            fill.setAttribute('data-level', level);
+            if (text) {
+              text.textContent = 'Parooli tugevus: ' + labels[level];
+            }
           }
-          const level = evaluateStrength(value);
-          fill.style.width = widths[level] || widths.weak;
-          fill.setAttribute('data-level', level);
-          if (text) {
-            text.textContent = 'Parooli tugevus: ' + labels[level];
-          }
-        }
 
-        function updateMatch() {
-          if (!matchText || !confirmInput) {
-            return;
+          function updateMatch() {
+            if (!matchText || !confirmInput) {
+              return;
+            }
+            if (!confirmInput.value) {
+              matchText.textContent = '';
+              matchText.classList.remove('success', 'error');
+              return;
+            }
+            if (confirmInput.value === passwordInput.value) {
+              matchText.textContent = 'Paroolid kattuvad.';
+              matchText.classList.add('success');
+              matchText.classList.remove('error');
+            } else {
+              matchText.textContent = 'Paroolid ei kattu.';
+              matchText.classList.add('error');
+              matchText.classList.remove('success');
+            }
           }
-          if (!confirmInput.value) {
-            matchText.textContent = '';
-            matchText.classList.remove('success', 'error');
-            return;
-          }
-          if (confirmInput.value === passwordInput.value) {
-            matchText.textContent = 'Paroolid kattuvad.';
-            matchText.classList.add('success');
-            matchText.classList.remove('error');
-          } else {
-            matchText.textContent = 'Paroolid ei kattu.';
-            matchText.classList.add('error');
-            matchText.classList.remove('success');
-          }
-        }
 
-        passwordInput.addEventListener('input', function () {
+          passwordInput.addEventListener('input', function () {
+            updateStrength();
+            updateMatch();
+          });
+
+          if (confirmInput) {
+            confirmInput.addEventListener('input', updateMatch);
+          }
+
           updateStrength();
-          updateMatch();
-        });
-
-        if (confirmInput) {
-          confirmInput.addEventListener('input', updateMatch);
         }
 
-        updateStrength();
+        let availabilityTimer = null;
+        let lastRequestId = 0;
+        let usernameAvailable = true;
+        let emailAvailable = true;
+
+        function updateSubmitState() {
+          if (!submitButton) {
+            return;
+          }
+          const disableUsername = usernameInput && usernameInput.value.trim() && !usernameAvailable;
+          const disableEmail = emailInput && emailInput.value.trim() && !emailAvailable;
+          submitButton.disabled = Boolean(disableUsername || disableEmail);
+        }
+
+        function scheduleAvailabilityCheck() {
+          if (!usernameInput && !emailInput) {
+            return;
+          }
+          if (availabilityTimer) {
+            clearTimeout(availabilityTimer);
+          }
+          availabilityTimer = setTimeout(runAvailabilityCheck, debounceDelay);
+        }
+
+        async function runAvailabilityCheck() {
+          const usernameValue = usernameInput ? usernameInput.value.trim() : '';
+          const emailValue = emailInput ? emailInput.value.trim() : '';
+
+          if (!usernameValue) {
+            usernameAvailable = true;
+            setStatusMessage(usernameMessage, null, '');
+          }
+          if (!emailValue) {
+            emailAvailable = true;
+            setStatusMessage(emailMessage, null, '');
+          }
+
+          if (!usernameValue && !emailValue) {
+            updateSubmitState();
+            return;
+          }
+
+          const params = new URLSearchParams();
+          let shouldRequest = false;
+          let requestedUsername = false;
+          let requestedEmail = false;
+
+          if (usernameValue) {
+            params.set('username', usernameValue);
+            shouldRequest = true;
+            requestedUsername = true;
+            setStatusMessage(usernameMessage, null, 'Kontrollin saadavust...');
+          }
+
+          if (emailValue) {
+            if (!emailInput || emailInput.checkValidity()) {
+              params.set('email', emailValue);
+              shouldRequest = true;
+              requestedEmail = true;
+              setStatusMessage(emailMessage, null, 'Kontrollin saadavust...');
+            } else {
+              emailAvailable = false;
+              setStatusMessage(emailMessage, 'error', 'Sisesta kehtiv e-posti aadress.');
+            }
+          }
+
+          if (!shouldRequest) {
+            updateSubmitState();
+            return;
+          }
+
+          const requestId = ++lastRequestId;
+
+          try {
+            const response = await fetch(availabilityEndpoint + '?' + params.toString(), {
+              headers: { 'Accept': 'application/json' },
+            });
+            if (!response.ok) {
+              throw new Error('Request failed');
+            }
+            const data = await response.json();
+            if (requestId !== lastRequestId) {
+              return;
+            }
+
+            if (requestedUsername) {
+              usernameAvailable = data.usernameAvailable !== false;
+              if (usernameAvailable) {
+                setStatusMessage(usernameMessage, 'success', 'Kasutajanimi on saadaval.');
+              } else {
+                setStatusMessage(
+                  usernameMessage,
+                  'error',
+                  'Selline kasutajanimi on juba kasutusel.'
+                );
+              }
+            }
+
+            if (requestedEmail) {
+              emailAvailable = data.emailAvailable !== false;
+              if (emailAvailable) {
+                setStatusMessage(emailMessage, 'success', 'E-posti aadress on saadaval.');
+              } else {
+                setStatusMessage(
+                  emailMessage,
+                  'error',
+                  'Sellise e-posti aadressiga konto on juba olemas.'
+                );
+              }
+            }
+          } catch (err) {
+            if (requestId !== lastRequestId) {
+              return;
+            }
+            console.error(err);
+            setStatusMessage(
+              usernameMessage,
+              'error',
+              requestedUsername && usernameValue ? 'Saadavuse kontroll ebaõnnestus.' : ''
+            );
+            setStatusMessage(
+              emailMessage,
+              'error',
+              requestedEmail && emailValue ? 'Saadavuse kontroll ebaõnnestus.' : ''
+            );
+          } finally {
+            updateSubmitState();
+          }
+        }
+
+        if (usernameInput) {
+          usernameInput.addEventListener('input', scheduleAvailabilityCheck);
+        }
+        if (emailInput) {
+          emailInput.addEventListener('input', scheduleAvailabilityCheck);
+        }
+
+        scheduleAvailabilityCheck();
       });
     })();
   </script>`;
@@ -169,6 +328,7 @@ function renderHome({ user, flash }) {
           maxlength="32"
           autocomplete="username"
         />
+        <p class="availability-message" data-availability-username aria-live="polite"></p>
         <label for="register-email">E-posti aadress</label>
         <input
           id="register-email"
@@ -178,6 +338,7 @@ function renderHome({ user, flash }) {
           maxlength="255"
           autocomplete="email"
         />
+        <p class="availability-message" data-availability-email aria-live="polite"></p>
         <label for="register-password">Parool</label>
         <input
           id="register-password"
@@ -272,6 +433,7 @@ function renderGame({ user, flash }) {
             maxlength="32"
             autocomplete="username"
           />
+          <p class="availability-message" data-availability-username aria-live="polite"></p>
           <label for="upgrade-email">E-posti aadress</label>
           <input
             id="upgrade-email"
@@ -281,6 +443,7 @@ function renderGame({ user, flash }) {
             maxlength="255"
             autocomplete="email"
           />
+          <p class="availability-message" data-availability-email aria-live="polite"></p>
           <label for="upgrade-password">Parool</label>
           <input
             id="upgrade-password"
@@ -324,14 +487,7 @@ function renderGame({ user, flash }) {
       </ul>
       <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
     </section>
-    ${guestRegister}
-    <section class="card">
-      <h3>Seansi haldus</h3>
-      <form method="POST" action="/logout" class="inline-form">
-        <button type="submit" class="button secondary">Logi välja</button>
-      </form>
-      <p class="help-text">Välja logides salvestatakse sinu progress, kui oled registreeritud mängija.</p>
-    </section>`;
+    ${guestRegister}`;
 
   return layout({ title: 'LegendIdle - Mäng', body, user, flash });
 }
