@@ -1,0 +1,19 @@
+{
+  "name": "legendidle_v4",
+  "version": "1.0.0",
+  "description": "Simple prototype for a RuneScape-inspired web idle game with guest and registered sessions.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "echo \"No tests specified\""
+  },
+  "keywords": [
+    "game",
+    "idle",
+    "prototype"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
