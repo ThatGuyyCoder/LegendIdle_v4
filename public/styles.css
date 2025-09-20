@@ -734,9 +734,8 @@ body.js-enabled .guest-register-enhanced-note {
 
 .game-layout {
   display: grid;
-
-  gap: clamp(1.5rem, 3vw, 2.5rem);
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 320px);
+  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
   align-items: start;
 }
 
@@ -745,13 +744,6 @@ body.js-enabled .guest-register-enhanced-note {
   display: grid;
   gap: 1.5rem;
   align-content: start;
-}
-
-
-.game-sidebar {
-  justify-self: end;
-  width: 100%;
-  max-width: 320px;
 }
 
 .equipment-card {
@@ -907,9 +899,6 @@ body.js-enabled .guest-register-enhanced-note {
 
   .game-sidebar {
     order: 2;
-    max-width: none;
-    justify-self: stretch;
-
   }
 }
 
