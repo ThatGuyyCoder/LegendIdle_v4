@@ -115,6 +115,55 @@ input:focus {
   background: rgba(8, 11, 18, 0.85);
 }
 
+.password-strength {
+  margin-bottom: 0.9rem;
+}
+
+.password-strength-bar {
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+
+.password-strength-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: #d95757;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.password-strength-fill[data-level='medium'] {
+  background: #e6b450;
+}
+
+.password-strength-fill[data-level='strong'] {
+  background: #4caf50;
+}
+
+.password-strength-text {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.password-match {
+  font-size: 0.85rem;
+  margin: -0.35rem 0 0.85rem;
+  min-height: 1.1rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.password-match.success {
+  color: #4caf50;
+}
+
+.password-match.error {
+  color: #ff6b6b;
+}
+
 .button,
 button {
   display: inline-flex;

@@ -4,6 +4,8 @@ const fs = require('fs/promises');
 const crypto = require('crypto');
 const { renderHome, renderGame } = require('./templates');
 const { findUser, createUser, updateUserProgress } = require('./userStore');
+const { defaultProgress, cloneProgress } = require('./progress');
+const { initDb } = require('./db');
 
 const PORT = process.env.PORT || 3000;
 const sessionStore = new Map();
@@ -101,23 +103,6 @@ function getFlash(session) {
   return flash;
 }
 
-function defaultProgress() {
-  return {
-    skills: {
-      Võitlus: 1,
-      Kogumine: 1,
-      Meisterlikkus: 1,
-      Maagia: 1,
-    },
-    gold: 0,
-    lastTraining: null,
-  };
-}
-
-function cloneProgress(progress) {
-  return JSON.parse(JSON.stringify(progress || defaultProgress()));
-}
-
 function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hashed = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -200,10 +185,20 @@ async function serveStyles(res) {
   }
 }
 
+function isValidEmail(email) {
+  if (!email) {
+    return false;
+  }
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailPattern.test(email);
+}
+
 async function handleRegister(req, res) {
   const body = await parseBody(req);
   const username = (body.username || '').trim();
+  const email = (body.email || '').trim();
   const password = body.password || '';
+  const confirmPassword = body.confirmPassword || '';
   const session = req.session;
 
   if (session.user && !session.user.isGuest) {
@@ -212,14 +207,26 @@ async function handleRegister(req, res) {
     return;
   }
 
-  if (!username || !password) {
-    setFlash(session, 'error', 'Kasutajanimi ja parool peavad olema täidetud.');
+  if (!username || !password || !email) {
+    setFlash(session, 'error', 'Kasutajanimi, e-posti aadress ja parool peavad olema täidetud.');
     redirect(res, '/');
     return;
   }
 
-  if (password.length < 6) {
-    setFlash(session, 'error', 'Parool peab olema vähemalt 6 tähemärki pikk.');
+  if (!isValidEmail(email)) {
+    setFlash(session, 'error', 'Palun sisesta kehtiv e-posti aadress.');
+    redirect(res, '/');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    setFlash(session, 'error', 'Sisestatud paroolid ei kattu.');
+    redirect(res, '/');
+    return;
+  }
+
+  if (password.length < 8) {
+    setFlash(session, 'error', 'Parool peab olema vähemalt 8 tähemärki pikk.');
     redirect(res, '/');
     return;
   }
@@ -229,10 +236,11 @@ async function handleRegister(req, res) {
 
   try {
     const passwordHash = hashPassword(password);
-    const user = await createUser({ username, passwordHash, progress });
+    const user = await createUser({ username, email, passwordHash, progress });
     session.user = {
       id: user.id,
       username: user.username,
+      email: user.email,
       isGuest: false,
       progress: cloneProgress(user.progress),
     };
@@ -247,6 +255,13 @@ async function handleRegister(req, res) {
   } catch (err) {
     if (err.code === 'USER_EXISTS') {
       setFlash(session, 'error', 'Sellise kasutajanimega konto on juba olemas. Palun vali uus nimi.');
+      redirect(res, '/');
+    } else if (err.code === 'EMAIL_EXISTS') {
+      setFlash(
+        session,
+        'error',
+        'Sellise e-posti aadressiga konto on juba olemas. Palun kasuta teist aadressi või logi sisse.'
+      );
       redirect(res, '/');
     } else {
       console.error('Register error:', err);
@@ -278,6 +293,7 @@ async function handleLogin(req, res) {
   session.user = {
     id: user.id,
     username: user.username,
+    email: user.email,
     isGuest: false,
     progress: cloneProgress(user.progress || defaultProgress()),
   };
@@ -398,6 +414,13 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, () => {
-  console.log(`LegendIdle prototüüp töötab aadressil http://localhost:${PORT}`);
-});
+initDb()
+  .then(() => {
+    server.listen(PORT, () => {
+      console.log(`LegendIdle prototüüp töötab aadressil http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Andmebaasi lähtestamine ebaõnnestus:', err);
+    process.exit(1);
+  });

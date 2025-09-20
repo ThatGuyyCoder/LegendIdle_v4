@@ -22,6 +22,96 @@ function layout({ title, body, user, flash }) {
       }! <form method="POST" action="/logout" class="inline-form"><button type="submit">Logi välja</button></form></div>`
     : '<div class="nav-user"><a href="/">Avaleht</a></div>';
 
+  const passwordScript = `<script>
+    (function () {
+      const forms = document.querySelectorAll('form[data-password-form]');
+      if (!forms.length) {
+        return;
+      }
+
+      const labels = { weak: 'Nõrk', medium: 'Keskmine', strong: 'Tugev' };
+      const widths = { weak: '33%', medium: '66%', strong: '100%' };
+
+      function evaluateStrength(password) {
+        let score = 0;
+        if (password.length >= 8) score += 1;
+        if (password.length >= 12) score += 1;
+        if (/[a-z]/.test(password)) score += 1;
+        if (/[A-Z]/.test(password)) score += 1;
+        if (/\d/.test(password)) score += 1;
+        if (/[^A-Za-z0-9]/.test(password)) score += 1;
+        if (score >= 5) {
+          return 'strong';
+        }
+        if (score >= 3) {
+          return 'medium';
+        }
+        return 'weak';
+      }
+
+      forms.forEach(function (form) {
+        const passwordInput = form.querySelector('[data-password-input]');
+        const confirmInput = form.querySelector('[data-password-confirm]');
+        const strengthContainer = form.querySelector('[data-password-strength]');
+        if (!passwordInput || !strengthContainer) {
+          return;
+        }
+        const fill = strengthContainer.querySelector('.password-strength-fill');
+        const text = strengthContainer.querySelector('.password-strength-text');
+        const matchText = form.querySelector('[data-password-match]');
+
+        function updateStrength() {
+          const value = passwordInput.value || '';
+          if (!value) {
+            fill.style.width = '0';
+            fill.setAttribute('data-level', 'weak');
+            if (text) {
+              text.textContent = 'Sisesta parool, et näha tugevust';
+            }
+            return;
+          }
+          const level = evaluateStrength(value);
+          fill.style.width = widths[level] || widths.weak;
+          fill.setAttribute('data-level', level);
+          if (text) {
+            text.textContent = 'Parooli tugevus: ' + labels[level];
+          }
+        }
+
+        function updateMatch() {
+          if (!matchText || !confirmInput) {
+            return;
+          }
+          if (!confirmInput.value) {
+            matchText.textContent = '';
+            matchText.classList.remove('success', 'error');
+            return;
+          }
+          if (confirmInput.value === passwordInput.value) {
+            matchText.textContent = 'Paroolid kattuvad.';
+            matchText.classList.add('success');
+            matchText.classList.remove('error');
+          } else {
+            matchText.textContent = 'Paroolid ei kattu.';
+            matchText.classList.add('error');
+            matchText.classList.remove('success');
+          }
+        }
+
+        passwordInput.addEventListener('input', function () {
+          updateStrength();
+          updateMatch();
+        });
+
+        if (confirmInput) {
+          confirmInput.addEventListener('input', updateMatch);
+        }
+
+        updateStrength();
+      });
+    })();
+  </script>`;
+
   return `<!DOCTYPE html>
 <html lang="et">
 <head>
@@ -45,6 +135,7 @@ function layout({ title, body, user, flash }) {
   <footer class="site-footer">
     <p>&copy; ${new Date().getFullYear()} LegendIdle meeskond. See on varajane prototüüp, mis on loodud ideede testimiseks.</p>
   </footer>
+  ${passwordScript}
 </body>
 </html>`;
 }
@@ -69,11 +160,51 @@ function renderHome({ user, flash }) {
   const authForms = `<section class="forms-grid">
     <div class="card">
       <h3>Loo uus konto</h3>
-      <form method="POST" action="/register">
+      <form method="POST" action="/register" data-password-form>
         <label for="register-username">Kasutajanimi</label>
-        <input id="register-username" name="username" required maxlength="32" />
+        <input
+          id="register-username"
+          name="username"
+          required
+          maxlength="32"
+          autocomplete="username"
+        />
+        <label for="register-email">E-posti aadress</label>
+        <input
+          id="register-email"
+          name="email"
+          type="email"
+          required
+          maxlength="255"
+          autocomplete="email"
+        />
         <label for="register-password">Parool</label>
-        <input id="register-password" name="password" type="password" required minlength="6" />
+        <input
+          id="register-password"
+          name="password"
+          type="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+          data-password-input
+        />
+        <div class="password-strength" data-password-strength>
+          <div class="password-strength-bar">
+            <span class="password-strength-fill" data-level="weak"></span>
+          </div>
+          <span class="password-strength-text">Sisesta parool, et näha tugevust</span>
+        </div>
+        <label for="register-confirm">Kinnita parool</label>
+        <input
+          id="register-confirm"
+          name="confirmPassword"
+          type="password"
+          required
+          minlength="8"
+          autocomplete="new-password"
+          data-password-confirm
+        />
+        <p class="password-match" data-password-match aria-live="polite"></p>
         <button type="submit" class="button primary">Registreeru</button>
       </form>
       <p class="help-text">Kontoga jääb sinu progress alles ning saad mängu jätkata ükskõik kust.</p>
@@ -132,11 +263,51 @@ function renderGame({ user, flash }) {
     ? `<section class="card">
         <h3>Muuda oma külaliskonto püsivaks</h3>
         <p>Saad säilitada kogu seni kogutud progressi, täites all oleva vormi.</p>
-        <form method="POST" action="/register">
+        <form method="POST" action="/register" data-password-form>
           <label for="upgrade-username">Kasutajanimi</label>
-          <input id="upgrade-username" name="username" required maxlength="32" />
+          <input
+            id="upgrade-username"
+            name="username"
+            required
+            maxlength="32"
+            autocomplete="username"
+          />
+          <label for="upgrade-email">E-posti aadress</label>
+          <input
+            id="upgrade-email"
+            name="email"
+            type="email"
+            required
+            maxlength="255"
+            autocomplete="email"
+          />
           <label for="upgrade-password">Parool</label>
-          <input id="upgrade-password" name="password" type="password" required minlength="6" />
+          <input
+            id="upgrade-password"
+            name="password"
+            type="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            data-password-input
+          />
+          <div class="password-strength" data-password-strength>
+            <div class="password-strength-bar">
+              <span class="password-strength-fill" data-level="weak"></span>
+            </div>
+            <span class="password-strength-text">Sisesta parool, et näha tugevust</span>
+          </div>
+          <label for="upgrade-confirm">Kinnita parool</label>
+          <input
+            id="upgrade-confirm"
+            name="confirmPassword"
+            type="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            data-password-confirm
+          />
+          <p class="password-match" data-password-match aria-live="polite"></p>
           <button type="submit" class="button primary">Loo konto ja salvesta progress</button>
         </form>
       </section>`
