@@ -11,8 +11,14 @@ function renderFlash(flash) {
   if (!flash) {
     return '';
   }
-  const typeClass = flash.type === 'error' ? 'flash-error' : 'flash-success';
-  return `<div class="flash ${typeClass}">${escapeHtml(flash.message)}</div>`;
+  const type = flash.type === 'error' ? 'error' : 'success';
+  const typeClass = type === 'error' ? 'flash-error' : 'flash-success';
+  const timeout = type === 'error' ? 30000 : 8000;
+  const role = type === 'error' ? 'alert' : 'status';
+  return `<div class="flash ${typeClass}" role="${role}" data-flash data-flash-type="${type}" data-flash-timeout="${timeout}">
+    <span class="flash-message">${escapeHtml(flash.message)}</span>
+    <button type="button" class="flash-close" data-flash-close aria-label="Sulge teade" title="Sulge teade">&times;</button>
+  </div>`;
 }
 
 function getUserInitial(username) {
@@ -372,6 +378,78 @@ function layout({ title, body, user, flash }) {
       document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
           closeModal();
+        }
+      });
+    })();
+  </script>`;
+
+  const flashScript = `<script>
+    (function () {
+      var flashes = document.querySelectorAll('[data-flash]');
+      if (!flashes.length) {
+        return;
+      }
+
+      flashes.forEach(function (flash) {
+        var timeoutAttr = flash.getAttribute('data-flash-timeout');
+        var timeout = parseInt(timeoutAttr, 10);
+        if (isNaN(timeout)) {
+          timeout = 0;
+        }
+
+        var closeButton = flash.querySelector('[data-flash-close]');
+        var dismissTimer = null;
+
+        function clearTimer() {
+          if (dismissTimer) {
+            window.clearTimeout(dismissTimer);
+            dismissTimer = null;
+          }
+        }
+
+        function finalizeRemoval() {
+          clearTimer();
+          if (flash.parentNode) {
+            flash.parentNode.removeChild(flash);
+          }
+        }
+
+        function dismissFlash() {
+          if (flash.dataset.dismissed === 'true') {
+            return;
+          }
+          flash.dataset.dismissed = 'true';
+          clearTimer();
+          flash.classList.add('flash-dismissed');
+          flash.addEventListener('transitionend', function handle(event) {
+            if (event.target !== flash) {
+              return;
+            }
+            flash.removeEventListener('transitionend', handle);
+            finalizeRemoval();
+          });
+          window.setTimeout(finalizeRemoval, 500);
+        }
+
+        function startTimer() {
+          if (!timeout || timeout <= 0) {
+            return;
+          }
+          clearTimer();
+          dismissTimer = window.setTimeout(dismissFlash, timeout);
+        }
+
+        if (closeButton) {
+          closeButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            dismissFlash();
+          });
+        }
+
+        if (timeout && timeout > 0) {
+          startTimer();
+          flash.addEventListener('mouseenter', clearTimer);
+          flash.addEventListener('mouseleave', startTimer);
         }
       });
     })();
@@ -853,6 +931,7 @@ function layout({ title, body, user, flash }) {
     <p>&copy; ${new Date().getFullYear()} LegendIdle meeskond. See on varajane prototüüp, mis on loodud ideede testimiseks.</p>
   </footer>
   ${guestRegisterModal}
+  ${flashScript}
   ${passwordScript}
 </body>
 </html>`;

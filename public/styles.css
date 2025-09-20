@@ -717,11 +717,54 @@ body.js-enabled .guest-register-enhanced-note {
 }
 
 .flash {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 600;
   border: 1px solid transparent;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  opacity: 1;
+  transform: translateY(0);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+    opacity 0.2s ease, transform 0.2s ease;
+}
+
+.flash-message {
+  flex: 1;
+}
+
+.flash-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+}
+
+.flash-close:hover,
+.flash-close:focus-visible {
+  background: var(--button-bg-hover);
+}
+
+.flash-close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.flash-dismissed {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .flash + .flash {
