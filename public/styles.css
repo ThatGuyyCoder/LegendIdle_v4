@@ -403,14 +403,30 @@ body:not(.js-enabled) .nav-user-divider {
   display: block;
 }
 
-.content-area {
+.page-layout {
   flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: clamp(2rem, 5vw, 3.5rem);
   padding: clamp(1rem, 4vw, 3rem);
+}
+
+.page-layout--sidebar-ready {
+  justify-content: flex-start;
+}
+
+.content-area {
+  flex: 0 1 860px;
   display: grid;
   gap: 1.5rem;
-  max-width: 1100px;
+  max-width: 860px;
   width: 100%;
-  margin: 0 auto;
+}
+
+.content-area > * {
+  width: 100%;
 }
 
 .hero {
@@ -718,6 +734,7 @@ body.js-enabled .guest-register-enhanced-note {
 
 .game-layout {
   display: grid;
+
   gap: clamp(1.75rem, 4vw, 3rem);
   grid-template-columns: minmax(520px, 1fr) minmax(220px, 280px);
   align-items: start;
@@ -731,6 +748,7 @@ body.js-enabled .guest-register-enhanced-note {
   gap: 1.5rem;
   align-content: start;
 }
+
 
 .game-sidebar {
   justify-self: end;
@@ -808,11 +826,54 @@ body.js-enabled .guest-register-enhanced-note {
 }
 
 .flash {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
   font-weight: 600;
   border: 1px solid transparent;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  opacity: 1;
+  transform: translateY(0);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+    opacity 0.2s ease, transform 0.2s ease;
+}
+
+.flash-message {
+  flex: 1;
+}
+
+.flash-close {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0.2rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+}
+
+.flash-close:hover,
+.flash-close:focus-visible {
+  background: var(--button-bg-hover);
+}
+
+.flash-close:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.flash-dismissed {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .flash + .flash {

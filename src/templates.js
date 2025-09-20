@@ -11,8 +11,14 @@ function renderFlash(flash) {
   if (!flash) {
     return '';
   }
-  const typeClass = flash.type === 'error' ? 'flash-error' : 'flash-success';
-  return `<div class="flash ${typeClass}">${escapeHtml(flash.message)}</div>`;
+  const type = flash.type === 'error' ? 'error' : 'success';
+  const typeClass = type === 'error' ? 'flash-error' : 'flash-success';
+  const timeout = type === 'error' ? 30000 : 8000;
+  const role = type === 'error' ? 'alert' : 'status';
+  return `<div class="flash ${typeClass}" role="${role}" data-flash data-flash-type="${type}" data-flash-timeout="${timeout}">
+    <span class="flash-message">${escapeHtml(flash.message)}</span>
+    <button type="button" class="flash-close" data-flash-close aria-label="Sulge teade" title="Sulge teade">&times;</button>
+  </div>`;
 }
 
 function getUserInitial(username) {
@@ -38,7 +44,7 @@ function renderNavLinks(user) {
     ? '<button type="button" class="nav-user-menu-button nav-user-register" data-open-register>Registreeru</button>'
     : '';
   const registerFallbackLink = user.isGuest
-    ? '<a class="nav-user-menu-button nav-user-register nav-user-register-fallback" href="#guest-register">Registreeru (vorm allpool)</a>'
+    ? '<a class="nav-user-menu-button nav-user-register nav-user-register-fallback" href="/">Registreeru avalehel</a>'
     : '';
   const dropdownId = 'nav-user-menu';
 
@@ -198,7 +204,7 @@ function renderEquipmentIcon(name) {
   }
 }
 
-function layout({ title, body, user, flash }) {
+function layout({ title, body, user, flash, pageLayoutModifier = '' }) {
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
@@ -437,6 +443,78 @@ function layout({ title, body, user, flash }) {
       document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
           closeModal();
+        }
+      });
+    })();
+  </script>`;
+
+  const flashScript = `<script>
+    (function () {
+      var flashes = document.querySelectorAll('[data-flash]');
+      if (!flashes.length) {
+        return;
+      }
+
+      flashes.forEach(function (flash) {
+        var timeoutAttr = flash.getAttribute('data-flash-timeout');
+        var timeout = parseInt(timeoutAttr, 10);
+        if (isNaN(timeout)) {
+          timeout = 0;
+        }
+
+        var closeButton = flash.querySelector('[data-flash-close]');
+        var dismissTimer = null;
+
+        function clearTimer() {
+          if (dismissTimer) {
+            window.clearTimeout(dismissTimer);
+            dismissTimer = null;
+          }
+        }
+
+        function finalizeRemoval() {
+          clearTimer();
+          if (flash.parentNode) {
+            flash.parentNode.removeChild(flash);
+          }
+        }
+
+        function dismissFlash() {
+          if (flash.dataset.dismissed === 'true') {
+            return;
+          }
+          flash.dataset.dismissed = 'true';
+          clearTimer();
+          flash.classList.add('flash-dismissed');
+          flash.addEventListener('transitionend', function handle(event) {
+            if (event.target !== flash) {
+              return;
+            }
+            flash.removeEventListener('transitionend', handle);
+            finalizeRemoval();
+          });
+          window.setTimeout(finalizeRemoval, 500);
+        }
+
+        function startTimer() {
+          if (!timeout || timeout <= 0) {
+            return;
+          }
+          clearTimer();
+          dismissTimer = window.setTimeout(dismissFlash, timeout);
+        }
+
+        if (closeButton) {
+          closeButton.addEventListener('click', function (event) {
+            event.preventDefault();
+            dismissFlash();
+          });
+        }
+
+        if (timeout && timeout > 0) {
+          startTimer();
+          flash.addEventListener('mouseenter', clearTimer);
+          flash.addEventListener('mouseleave', startTimer);
         }
       });
     })();
@@ -890,6 +968,11 @@ function layout({ title, body, user, flash }) {
     })();
   </script>`;
 
+  const layoutClasses = ['page-layout'];
+  if (pageLayoutModifier) {
+    layoutClasses.push(pageLayoutModifier);
+  }
+
   return `<!DOCTYPE html>
 <html lang="et" data-theme="dark">
 <head>
@@ -910,14 +993,17 @@ function layout({ title, body, user, flash }) {
       ${navLinks}
     </div>
   </header>
-  <main class="content-area">
-    ${renderFlash(flash)}
-    ${body}
-  </main>
+  <div class="${layoutClasses.join(' ')}">
+    <main class="content-area">
+      ${renderFlash(flash)}
+      ${body}
+    </main>
+  </div>
   <footer class="site-footer">
     <p>&copy; ${new Date().getFullYear()} LegendIdle meeskond. See on varajane prototüüp, mis on loodud ideede testimiseks.</p>
   </footer>
   ${guestRegisterModal}
+  ${flashScript}
   ${passwordScript}
 </body>
 </html>`;
@@ -1048,70 +1134,9 @@ function renderGame({ user, flash }) {
   }).join('');
 
   const guestMessage = user.isGuest
-    ? '<p class="help-text">Säilita külalisena kogutud progress, kasutades allolevat vormi või ava profiilimenüüst valik "Registreeru".</p>'
+    ? '<p class="help-text">Säilita külalisena kogutud progress, avades profiilimenüüst valiku "Registreeru".</p>'
     : '';
 
-  const guestRegisterPrompt = user.isGuest
-    ? `<section class="card guest-register-cta" id="guest-register">
-        <h3>Muuda oma külaliskonto püsivaks</h3>
-        <p class="help-text">Täida vorm, et luua püsiv konto.<span class="guest-register-enhanced-note"> Skriptide korral saad avada ka eraldi registreerimisakna.</span></p>
-        <button type="button" class="button primary guest-register-trigger" data-open-register>Alusta registreerimist</button>
-        <div class="guest-register-inline">
-          <form method="POST" action="/register" data-password-form>
-            <label for="guest-register-username">Kasutajanimi</label>
-            <input
-              id="guest-register-username"
-              name="username"
-              required
-              minlength="3"
-              maxlength="12"
-              pattern="(?=.*[A-Za-zÀ-ÖØ-öø-ÿĀ-ž])[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]{3,12}"
-              title="Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest."
-              autocomplete="username"
-            />
-            <p class="availability-message" data-availability-username aria-live="polite"></p>
-            <label for="guest-register-email">E-posti aadress</label>
-            <input
-              id="guest-register-email"
-              name="email"
-              type="email"
-              required
-              maxlength="255"
-              autocomplete="email"
-            />
-            <p class="availability-message" data-availability-email aria-live="polite"></p>
-            <label for="guest-register-password">Parool</label>
-            <input
-              id="guest-register-password"
-              name="password"
-              type="password"
-              required
-              minlength="8"
-              autocomplete="new-password"
-              data-password-input
-            />
-            <div class="password-strength" data-password-strength>
-              <div class="password-strength-bar">
-                <span class="password-strength-fill" data-level="weak"></span>
-              </div>
-              <span class="password-strength-text">Sisesta parool, et näha tugevust</span>
-            </div>
-            <label for="guest-register-confirm">Kinnita parool</label>
-            <input
-              id="guest-register-confirm"
-              name="confirmPassword"
-              type="password"
-              required
-              minlength="8"
-              autocomplete="new-password"
-              data-password-confirm
-            />
-            <p class="password-match" data-password-match aria-live="polite"></p>
-            <button type="submit" class="button primary">Loo konto ja salvesta progress</button>
-          </form>
-        </div>
-      </section>`
-    : '';
 
   const equipmentSlots = [
     { key: 'head', label: 'Peakatte', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('helmet') },
@@ -1175,7 +1200,6 @@ function renderGame({ user, flash }) {
           </ul>
           <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
         </section>
-        ${guestRegisterPrompt}
       </div>
       <aside class="game-sidebar">
         <section class="card equipment-card">
@@ -1195,7 +1219,13 @@ function renderGame({ user, flash }) {
       </aside>
     </div>`;
 
-  return layout({ title: 'LegendIdle - Mäng', body, user, flash });
+  return layout({
+    title: 'LegendIdle - Mäng',
+    body,
+    user,
+    flash,
+    pageLayoutModifier: 'page-layout--sidebar-ready',
+  });
 }
 
 module.exports = {
