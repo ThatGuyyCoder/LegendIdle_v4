@@ -31,8 +31,12 @@ function layout({ title, body, user, flash }) {
 
       const labels = { weak: 'Nõrk', medium: 'Keskmine', strong: 'Tugev' };
       const widths = { weak: '33%', medium: '66%', strong: '100%' };
+      const usernameRulesText =
+        'Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest.';
       const availabilityEndpoint = '/availability';
       const debounceDelay = 300;
+      const fallbackAllowedUsername = /^[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]+$/;
+      const fallbackLetterPattern = /[A-Za-zÀ-ÖØ-öø-ÿĀ-ž]/;
 
       function evaluateStrength(password) {
         let score = 0;
@@ -74,6 +78,31 @@ function layout({ title, body, user, flash }) {
         const usernameMessage = form.querySelector('[data-availability-username]');
         const emailMessage = form.querySelector('[data-availability-email]');
         const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+        const usernamePatternString = usernameInput ? usernameInput.getAttribute('pattern') : '';
+        let usernamePattern = null;
+        if (usernamePatternString) {
+          try {
+            usernamePattern = new RegExp('^' + usernamePatternString + '$');
+          } catch (err) {
+            console.error('Vigane kasutajanime muster:', err);
+          }
+        }
+
+        function isUsernameFormatValid(value) {
+          if (!value) {
+            return false;
+          }
+          if (usernamePattern) {
+            return usernamePattern.test(value);
+          }
+          if (value.length < 3 || value.length > 12) {
+            return false;
+          }
+          if (!fallbackAllowedUsername.test(value)) {
+            return false;
+          }
+          return fallbackLetterPattern.test(value);
+        }
 
         if (passwordInput && strengthContainer) {
           const fill = strengthContainer.querySelector('.password-strength-fill');
@@ -156,17 +185,24 @@ function layout({ title, body, user, flash }) {
         async function runAvailabilityCheck() {
           const usernameValue = usernameInput ? usernameInput.value.trim() : '';
           const emailValue = emailInput ? emailInput.value.trim() : '';
+          let usernameFormatValid = true;
 
           if (!usernameValue) {
             usernameAvailable = true;
             setStatusMessage(usernameMessage, null, '');
+          } else if (!isUsernameFormatValid(usernameValue)) {
+            usernameFormatValid = false;
+            usernameAvailable = false;
+            setStatusMessage(usernameMessage, 'error', usernameRulesText);
           }
+
           if (!emailValue) {
             emailAvailable = true;
             setStatusMessage(emailMessage, null, '');
           }
 
           if (!usernameValue && !emailValue) {
+            lastRequestId += 1;
             updateSubmitState();
             return;
           }
@@ -176,7 +212,7 @@ function layout({ title, body, user, flash }) {
           let requestedUsername = false;
           let requestedEmail = false;
 
-          if (usernameValue) {
+          if (usernameValue && usernameFormatValid) {
             params.set('username', usernameValue);
             shouldRequest = true;
             requestedUsername = true;
@@ -196,6 +232,7 @@ function layout({ title, body, user, flash }) {
           }
 
           if (!shouldRequest) {
+            lastRequestId += 1;
             updateSubmitState();
             return;
           }
@@ -215,15 +252,24 @@ function layout({ title, body, user, flash }) {
             }
 
             if (requestedUsername) {
-              usernameAvailable = data.usernameAvailable !== false;
-              if (usernameAvailable) {
-                setStatusMessage(usernameMessage, 'success', 'Kasutajanimi on saadaval.');
-              } else {
+              if (data.usernameValid === false) {
+                usernameAvailable = false;
                 setStatusMessage(
                   usernameMessage,
                   'error',
-                  'Selline kasutajanimi on juba kasutusel.'
+                  data.usernameMessage || usernameRulesText
                 );
+              } else {
+                usernameAvailable = data.usernameAvailable !== false;
+                if (usernameAvailable) {
+                  setStatusMessage(usernameMessage, 'success', 'Kasutajanimi on saadaval.');
+                } else {
+                  setStatusMessage(
+                    usernameMessage,
+                    'error',
+                    'Selline kasutajanimi on juba kasutusel.'
+                  );
+                }
               }
             }
 
@@ -325,10 +371,14 @@ function renderHome({ user, flash }) {
           id="register-username"
           name="username"
           required
-          maxlength="32"
+          minlength="3"
+          maxlength="12"
+          pattern="(?=.*[A-Za-zÀ-ÖØ-öø-ÿĀ-ž])[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]{3,12}"
+          title="Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest."
           autocomplete="username"
         />
         <p class="availability-message" data-availability-username aria-live="polite"></p>
+        <p class="help-text">Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest.</p>
         <label for="register-email">E-posti aadress</label>
         <input
           id="register-email"
@@ -430,10 +480,14 @@ function renderGame({ user, flash }) {
             id="upgrade-username"
             name="username"
             required
-            maxlength="32"
+            minlength="3"
+            maxlength="12"
+            pattern="(?=.*[A-Za-zÀ-ÖØ-öø-ÿĀ-ž])[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]{3,12}"
+            title="Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest."
             autocomplete="username"
           />
           <p class="availability-message" data-availability-username aria-live="polite"></p>
+          <p class="help-text">Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest.</p>
           <label for="upgrade-email">E-posti aadress</label>
           <input
             id="upgrade-email"
