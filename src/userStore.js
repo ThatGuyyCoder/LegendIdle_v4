@@ -1,92 +1,163 @@
-const fs = require('fs/promises');
-const path = require('path');
-const crypto = require('crypto');
-
-const dataFile = path.join(__dirname, '../data/users.json');
-
-async function ensureStore() {
-  try {
-    await fs.access(dataFile);
-  } catch (err) {
-    if (err.code === 'ENOENT') {
-      await fs.mkdir(path.dirname(dataFile), { recursive: true });
-      await fs.writeFile(dataFile, '[]', 'utf8');
-    } else {
-      throw err;
-    }
-  }
-}
+const { getPool } = require('./db');
+const { defaultProgress, cloneProgress } = require('./progress');
 
 function normalizeUsername(username) {
   return username.trim().toLowerCase();
 }
 
-async function readUsers() {
-  await ensureStore();
-  const raw = await fs.readFile(dataFile, 'utf8');
-  if (!raw) {
-    return [];
+function mapSkillsToProgress(skillRows, baseProgress) {
+  const progress = cloneProgress(baseProgress);
+  for (const row of skillRows) {
+    progress.skills[row.skill_name] = row.level;
   }
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('Failed to parse user store, resetting to empty array.', err);
-    await fs.writeFile(dataFile, '[]', 'utf8');
-    return [];
-  }
-}
-
-async function writeUsers(users) {
-  await ensureStore();
-  await fs.writeFile(dataFile, JSON.stringify(users, null, 2), 'utf8');
+  return progress;
 }
 
 async function findUser(username) {
-  const users = await readUsers();
+  const pool = getPool();
   const normalized = normalizeUsername(username);
-  return users.find((user) => user.normalized === normalized) || null;
-}
+  const [rows] = await pool.query(
+    `SELECT id, username, email, password_hash AS passwordHash, gold, last_training AS lastTraining
+     FROM users
+     WHERE normalized = ?`,
+    [normalized]
+  );
 
-async function createUser({ username, passwordHash, progress }) {
-  const users = await readUsers();
-  const normalized = normalizeUsername(username);
-  if (users.some((user) => user.normalized === normalized)) {
-    const error = new Error('Username already exists.');
-    error.code = 'USER_EXISTS';
-    throw error;
-  }
-
-  const newUser = {
-    id: crypto.randomUUID(),
-    username: username.trim(),
-    normalized,
-    passwordHash,
-    createdAt: new Date().toISOString(),
-    progress,
-  };
-
-  users.push(newUser);
-  await writeUsers(users);
-  return newUser;
-}
-
-async function updateUserProgress(id, progress) {
-  const users = await readUsers();
-  const index = users.findIndex((user) => user.id === id);
-  if (index === -1) {
+  if (rows.length === 0) {
     return null;
   }
 
-  users[index].progress = progress;
-  users[index].updatedAt = new Date().toISOString();
-  await writeUsers(users);
-  return users[index];
+  const userRow = rows[0];
+  const [skillRows] = await pool.query(
+    `SELECT skill_name, level
+     FROM user_skills
+     WHERE user_id = ?`,
+    [userRow.id]
+  );
+
+  const baseProgress = defaultProgress();
+  baseProgress.gold = typeof userRow.gold === 'number' ? userRow.gold : baseProgress.gold;
+  baseProgress.lastTraining = userRow.lastTraining
+    ? new Date(userRow.lastTraining).toISOString()
+    : null;
+  const progress = mapSkillsToProgress(skillRows, baseProgress);
+
+  return {
+    id: userRow.id,
+    username: userRow.username,
+    email: userRow.email,
+    passwordHash: userRow.passwordHash,
+    progress,
+  };
+}
+
+async function createUser({ username, email, passwordHash, progress }) {
+  const pool = getPool();
+  const normalized = normalizeUsername(username);
+  const cleanProgress = cloneProgress(progress || defaultProgress());
+  cleanProgress.skills = {
+    ...defaultProgress().skills,
+    ...(cleanProgress.skills || {}),
+  };
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const [result] = await connection.query(
+      `INSERT INTO users (username, normalized, email, password_hash, gold, last_training)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        username.trim(),
+        normalized,
+        email,
+        passwordHash,
+        cleanProgress.gold ?? 0,
+        cleanProgress.lastTraining ? new Date(cleanProgress.lastTraining) : null,
+      ]
+    );
+
+    const userId = result.insertId;
+    const skillEntries = Object.entries(cleanProgress.skills);
+    for (const [skillName, level] of skillEntries) {
+      await connection.query(
+        `INSERT INTO user_skills (user_id, skill_name, level)
+         VALUES (?, ?, ?)`,
+        [userId, skillName, level]
+      );
+    }
+
+    await connection.commit();
+
+    return {
+      id: userId,
+      username: username.trim(),
+      email,
+      passwordHash,
+      progress: cleanProgress,
+    };
+  } catch (err) {
+    await connection.rollback();
+    if (err.code === 'ER_DUP_ENTRY') {
+      if (err.message.includes('users_normalized_unique')) {
+        const error = new Error('Username already exists.');
+        error.code = 'USER_EXISTS';
+        throw error;
+      }
+      if (err.message.includes('users_email_unique')) {
+        const error = new Error('Email already exists.');
+        error.code = 'EMAIL_EXISTS';
+        throw error;
+      }
+    }
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+async function updateUserProgress(id, progress) {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+  const cleanProgress = cloneProgress(progress || defaultProgress());
+  cleanProgress.skills = {
+    ...defaultProgress().skills,
+    ...(cleanProgress.skills || {}),
+  };
+
+  try {
+    await connection.beginTransaction();
+    await connection.query(
+      `UPDATE users
+       SET gold = ?, last_training = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [
+        cleanProgress.gold ?? 0,
+        cleanProgress.lastTraining ? new Date(cleanProgress.lastTraining) : null,
+        id,
+      ]
+    );
+
+    const skillEntries = Object.entries(cleanProgress.skills || {});
+    for (const [skillName, level] of skillEntries) {
+      await connection.query(
+        `INSERT INTO user_skills (user_id, skill_name, level)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE level = VALUES(level)`,
+        [id, skillName, level]
+      );
+    }
+
+    await connection.commit();
+    return cleanProgress;
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
 }
 
 module.exports = {
-  readUsers,
-  writeUsers,
   findUser,
   createUser,
   updateUserProgress,
