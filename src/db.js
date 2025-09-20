@@ -8,7 +8,7 @@ function getConfig() {
     port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'legendidle',
+    database: process.env.DB_NAME || 'legendidle_v4',
     waitForConnections: true,
     connectionLimit: process.env.DB_CONNECTION_LIMIT
       ? Number(process.env.DB_CONNECTION_LIMIT)
