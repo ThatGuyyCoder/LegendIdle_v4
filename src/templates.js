@@ -139,7 +139,73 @@ function renderGuestRegisterModal() {
   </div>`;
 }
 
-function layout({ title, body, user, flash, pageLayoutModifier }) {
+function renderEquipmentIcon(name) {
+  switch (name) {
+    case 'helmet':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 26a12 12 0 0 1 24 0v10H12Z"></path>
+        <path d="M12 30h24"></path>
+        <path d="M24 16v8"></path>
+      </svg>`;
+    case 'armor':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 10h16l6 6-5 6v14H15V22l-5-6Z"></path>
+        <path d="M24 10v26"></path>
+        <path d="M16 22h16"></path>
+      </svg>`;
+    case 'gloves':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 12h8l4 6v8l-3 10H17l-3-10v-6Z"></path>
+        <path d="M18 20h12"></path>
+        <path d="M22 12v8"></path>
+      </svg>`;
+    case 'boots':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 12v12H12v10h24V24h-8V12"></path>
+        <path d="M12 28h24"></path>
+      </svg>`;
+    case 'sword':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 6v24"></path>
+        <path d="M18 22h12"></path>
+        <path d="M21 30h6v6l-3 6-3-6Z"></path>
+      </svg>`;
+    case 'shield':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 6 38 12v12c0 8-5.5 14-14 18-8.5-4-14-10-14-18V12Z"></path>
+        <path d="M24 12v22"></path>
+      </svg>`;
+    case 'axe':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 10 34 26"></path>
+        <line x1="14" y1="30" x2="22" y2="38"></line>
+        <path d="M30 8h10l-2 10h-8l-4-4Z"></path>
+      </svg>`;
+    case 'pickaxe':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 16c4-6 8-8 12-8s8 2 12 8"></path>
+        <path d="M12 16h24"></path>
+        <path d="M24 16v22"></path>
+      </svg>`;
+    case 'fishing':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 10c14 8 14 18 12 30"></path>
+        <path d="M16 10 14 22"></path>
+        <path d="M30 34c3 0 4 2 4 4s-1 4-4 4"></path>
+      </svg>`;
+    case 'shovel':
+      return `<svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M24 6v22"></path>
+        <path d="M20 6h8l-2 6h-4Z"></path>
+        <path d="M18 30h12v6l-6 6-6-6Z"></path>
+      </svg>`;
+    default:
+      return '';
+  }
+}
+
+function layout({ title, body, user, flash }) {
+
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
@@ -1072,18 +1138,88 @@ function renderGame({ user, flash }) {
     ? '<p class="help-text">Säilita külalisena kogutud progress, avades profiilimenüüst valiku "Registreeru".</p>'
     : '';
 
-  const body = `<section class="card">
-      <h2>Tere tulemast tagasi, ${escapeHtml(user.username)}${user.isGuest ? ' (külaline)' : ''}!</h2>
-      <p>See on mängu prototüübi peavaade. Siin saad treenida oma oskusi, vaadata statistikat ning tulevikus ka võidelda teiste mängijatega.</p>
-      ${guestMessage}
-    </section>
-    <section class="card">
-      <h3>Oskused</h3>
-      <ul class="skill-list">
-        ${skillList}
-      </ul>
-      <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
-    </section>`;
+
+  const equipmentSlots = [
+    { key: 'head', label: 'Peakatte', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('helmet') },
+    { key: 'armor', label: 'Rüü ja püksid', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('armor') },
+    { key: 'gloves', label: 'Kindad', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('gloves') },
+    { key: 'boots', label: 'Jalanõud', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('boots') },
+    { key: 'sword', label: 'Mõõk', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('sword') },
+    { key: 'shield', label: 'Kilp', description: 'Ühtegi eset pole varustatud', icon: renderEquipmentIcon('shield') },
+  ];
+
+  const equipmentGrid = equipmentSlots
+    .map(
+      ({ key, label, description, icon }) => `
+        <div class="equipment-slot" data-slot="${escapeHtml(key)}">
+          <div class="equipment-icon" aria-hidden="true">
+            ${icon}
+          </div>
+          <div class="equipment-details">
+            <span class="equipment-label">${escapeHtml(label)}</span>
+            <span class="equipment-empty">${escapeHtml(description)}</span>
+          </div>
+        </div>
+      `
+    )
+    .join('');
+
+  const toolSlots = [
+    { key: 'axe', label: 'Kirves', description: 'Ühtegi tööriista pole varustatud', icon: renderEquipmentIcon('axe') },
+    { key: 'pickaxe', label: 'Kirka', description: 'Ühtegi tööriista pole varustatud', icon: renderEquipmentIcon('pickaxe') },
+    { key: 'fishing', label: 'Kalaõng', description: 'Ühtegi tööriista pole varustatud', icon: renderEquipmentIcon('fishing') },
+    { key: 'shovel', label: 'Labidas', description: 'Ühtegi tööriista pole varustatud', icon: renderEquipmentIcon('shovel') },
+  ];
+
+  const toolsGrid = toolSlots
+    .map(
+      ({ key, label, description, icon }) => `
+        <div class="equipment-slot" data-slot="${escapeHtml(key)}">
+          <div class="equipment-icon" aria-hidden="true">
+            ${icon}
+          </div>
+          <div class="equipment-details">
+            <span class="equipment-label">${escapeHtml(label)}</span>
+            <span class="equipment-empty">${escapeHtml(description)}</span>
+          </div>
+        </div>
+      `
+    )
+    .join('');
+
+  const body = `<div class="game-layout">
+      <div class="game-main">
+        <section class="card">
+          <h2>Tere tulemast tagasi, ${escapeHtml(user.username)}${user.isGuest ? ' (külaline)' : ''}!</h2>
+          <p>See on mängu prototüübi peavaade. Siin saad treenida oma oskusi, vaadata statistikat ning tulevikus ka võidelda teiste mängijatega.</p>
+          ${guestMessage}
+        </section>
+        <section class="card">
+          <h3>Oskused</h3>
+          <ul class="skill-list">
+            ${skillList}
+          </ul>
+          <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
+        </section>
+        ${guestRegisterPrompt}
+      </div>
+      <aside class="game-sidebar">
+        <section class="card equipment-card">
+          <h3>Varustus</h3>
+          <p class="equipment-subtitle">Varusta oma tegelast ja tugevda tema kaitset ning ründeid.</p>
+          <div class="equipment-grid">
+            ${equipmentGrid}
+          </div>
+        </section>
+        <section class="card equipment-card">
+          <h3>Tööriistad</h3>
+          <p class="equipment-subtitle">Vali tööriistad, mis aitavad oskusi treenida.</p>
+          <div class="equipment-grid">
+            ${toolsGrid}
+          </div>
+        </section>
+      </aside>
+    </div>`;
 
   return layout({
     title: 'LegendIdle - Mäng',
