@@ -1201,7 +1201,6 @@ function renderGame({ user, flash }) {
           </ul>
           <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
         </section>
-        ${guestRegisterPrompt}
       </div>
       <aside class="game-sidebar">
         <section class="card equipment-card">
