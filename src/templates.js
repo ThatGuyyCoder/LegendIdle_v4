@@ -378,7 +378,6 @@ function renderHome({ user, flash }) {
           autocomplete="username"
         />
         <p class="availability-message" data-availability-username aria-live="polite"></p>
-        <p class="help-text">Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest.</p>
         <label for="register-email">E-posti aadress</label>
         <input
           id="register-email"
@@ -487,7 +486,6 @@ function renderGame({ user, flash }) {
             autocomplete="username"
           />
           <p class="availability-message" data-availability-username aria-live="polite"></p>
-          <p class="help-text">Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest.</p>
           <label for="upgrade-email">E-posti aadress</label>
           <input
             id="upgrade-email"
