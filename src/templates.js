@@ -22,6 +22,104 @@ function layout({ title, body, user, flash }) {
       }! <form method="POST" action="/logout" class="inline-form"><button type="submit">Logi välja</button></form></div>`
     : '<div class="nav-user"><a href="/">Avaleht</a></div>';
 
+  const themeToggle = `<button type="button" class="theme-toggle" data-theme-toggle aria-label="Vaheta teemat">
+    <span class="visually-hidden" data-theme-toggle-text>Vaheta teemat</span>
+    <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.364-7.364-1.414 1.414M7.05 16.95l-1.414 1.414M18.364 18.364l-1.414-1.414M7.05 7.05 5.636 5.636"></path>
+    </svg>
+    <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 0 1 11.21 3a7 7 0 1 0 9.79 9.79Z"></path>
+    </svg>
+  </button>`;
+
+  const themeScript = `<script>
+    (function () {
+      var storageKey = 'legendidle-theme';
+      var root = document.documentElement;
+      var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      function getStoredTheme() {
+        try {
+          return window.localStorage.getItem(storageKey);
+        } catch (err) {
+          return null;
+        }
+      }
+
+      function setStoredTheme(theme) {
+        try {
+          window.localStorage.setItem(storageKey, theme);
+        } catch (err) {
+          // Ignore write errors
+        }
+      }
+
+      function systemTheme() {
+        return mediaQuery.matches ? 'dark' : 'light';
+      }
+
+      function applyTheme(theme) {
+        var next = theme === 'light' ? 'light' : 'dark';
+        root.dataset.theme = next;
+        root.style.colorScheme = next;
+        return next;
+      }
+
+      function updateToggle() {
+        var toggle = document.querySelector('[data-theme-toggle]');
+        if (!toggle) {
+          return;
+        }
+        var current = root.dataset.theme === 'light' ? 'light' : 'dark';
+        var next = current === 'dark' ? 'light' : 'dark';
+        var label = next === 'dark' ? 'Lülita tumedale teemale' : 'Lülita heledale teemale';
+        toggle.setAttribute('aria-label', label);
+        toggle.setAttribute('title', label);
+        var text = toggle.querySelector('[data-theme-toggle-text]');
+        if (text) {
+          text.textContent = label;
+        }
+      }
+
+      var storedTheme = getStoredTheme();
+      var initialTheme = storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : systemTheme();
+      applyTheme(initialTheme);
+      updateToggle();
+
+      function handleMediaChange(event) {
+        if (getStoredTheme()) {
+          return;
+        }
+        applyTheme(event.matches ? 'dark' : 'light');
+        updateToggle();
+      }
+
+      if (typeof mediaQuery.addEventListener === 'function') {
+        mediaQuery.addEventListener('change', handleMediaChange);
+      } else if (typeof mediaQuery.addListener === 'function') {
+        mediaQuery.addListener(handleMediaChange);
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        var toggle = document.querySelector('[data-theme-toggle]');
+        if (!toggle) {
+          return;
+        }
+
+        updateToggle();
+
+        toggle.addEventListener('click', function () {
+          var current = root.dataset.theme === 'light' ? 'light' : 'dark';
+          var next = current === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+          setStoredTheme(next);
+          updateToggle();
+        });
+      });
+    })();
+  </script>`;
+
   const passwordScript = `<script>
     (function () {
       const forms = document.querySelectorAll('form[data-password-form]');
@@ -318,11 +416,12 @@ function layout({ title, body, user, flash }) {
   </script>`;
 
   return `<!DOCTYPE html>
-<html lang="et">
+<html lang="et" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${escapeHtml(title)}</title>
+  ${themeScript}
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
@@ -331,7 +430,10 @@ function layout({ title, body, user, flash }) {
       <h1>LegendIdle</h1>
       <p>RuneScape'i stiilis brauserimängu prototüüp</p>
     </div>
-    ${navLinks}
+    <div class="site-nav">
+      ${themeToggle}
+      ${navLinks}
+    </div>
   </header>
   <main class="content-area">
     ${renderFlash(flash)}
