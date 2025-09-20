@@ -173,6 +173,8 @@ body {
 }
 
 .nav-user-menu-button {
+  display: inline-flex;
+  align-items: center;
   width: 100%;
   justify-content: flex-start;
   padding: 0.55rem 0.8rem;
@@ -182,6 +184,7 @@ body {
   font-size: 0.95rem;
   transform: none;
   text-align: left;
+  text-decoration: none;
 }
 
 .nav-user-menu-button:hover {
@@ -216,6 +219,43 @@ body {
 
 .nav-user-dropdown form {
   width: 100%;
+}
+
+body.js-enabled .nav-user-register-fallback {
+  display: none;
+}
+
+body:not(.js-enabled) .nav-user-menu-button[data-open-register] {
+  display: none;
+}
+
+body:not(.js-enabled) .nav-user {
+  position: static;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+body:not(.js-enabled) .nav-user-toggle {
+  cursor: default;
+}
+
+body:not(.js-enabled) .nav-user-caret {
+  display: none;
+}
+
+body:not(.js-enabled) .nav-user-dropdown {
+  position: static;
+  width: min(260px, 100%);
+  margin-top: 0;
+  box-shadow: none;
+  background: rgba(16, 19, 26, 0.75);
+  border-radius: 0.85rem;
+}
+
+body:not(.js-enabled) .nav-user-summary,
+body:not(.js-enabled) .nav-user-divider {
+  display: none;
 }
 
 .content-area {
@@ -462,6 +502,40 @@ body.modal-open {
   color: var(--muted);
   font-size: 0.9rem;
   margin: 0.5rem 0 0;
+}
+
+.guest-register-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.guest-register-trigger {
+  align-self: flex-start;
+}
+
+.guest-register-inline {
+  margin-top: 0.75rem;
+}
+
+.guest-register-inline form {
+  margin-top: 0.5rem;
+}
+
+body.js-enabled .guest-register-inline {
+  display: none;
+}
+
+body:not(.js-enabled) .guest-register-trigger {
+  display: none;
+}
+
+.guest-register-enhanced-note {
+  display: none;
+}
+
+body.js-enabled .guest-register-enhanced-note {
+  display: inline;
 }
 
 .skill-list {

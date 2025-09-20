@@ -37,6 +37,9 @@ function renderNavLinks(user) {
   const registerButton = user.isGuest
     ? '<button type="button" class="nav-user-menu-button nav-user-register" data-open-register>Registreeru</button>'
     : '';
+  const registerFallbackLink = user.isGuest
+    ? '<a class="nav-user-menu-button nav-user-register nav-user-register-fallback" href="#guest-register">Registreeru (vorm allpool)</a>'
+    : '';
   const dropdownId = 'nav-user-menu';
 
   return `<div class="nav-user" data-nav-user>
@@ -45,7 +48,7 @@ function renderNavLinks(user) {
       <span class="nav-user-name">${username}</span>
       <span class="nav-user-caret" aria-hidden="true"></span>
     </button>
-    <div class="nav-user-dropdown" id="${dropdownId}" data-nav-user-dropdown hidden>
+    <div class="nav-user-dropdown" id="${dropdownId}" data-nav-user-dropdown>
       <div class="nav-user-summary">
         <span class="nav-user-avatar" aria-hidden="true">${initial}</span>
         <div class="nav-user-details">
@@ -56,6 +59,7 @@ function renderNavLinks(user) {
       <div class="nav-user-divider" role="separator"></div>
       <div class="nav-user-actions">
         ${registerButton}
+        ${registerFallbackLink}
         <form method="POST" action="/logout" class="nav-user-logout-form">
           <button type="submit" class="nav-user-menu-button nav-user-logout">Logi välja</button>
         </form>
@@ -134,6 +138,18 @@ function layout({ title, body, user, flash }) {
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
   const passwordScript = `<script>
+    (function () {
+      if (document.body) {
+        document.body.classList.add('js-enabled');
+      } else {
+        document.addEventListener('DOMContentLoaded', function () {
+          if (document.body) {
+            document.body.classList.add('js-enabled');
+          }
+        });
+      }
+    })();
+
     (function () {
       const forms = document.querySelectorAll('form[data-password-form]');
       if (!forms.length) {
@@ -438,6 +454,9 @@ function layout({ title, body, user, flash }) {
         return;
       }
 
+      dropdown.hidden = true;
+      navUser.classList.add('is-enhanced');
+
       let isOpen = false;
 
       function openDropdown() {
@@ -720,14 +739,68 @@ function renderGame({ user, flash }) {
   }).join('');
 
   const guestMessage = user.isGuest
-    ? '<p class="help-text">Soovi korral ava üleval paremal profiilimenüü ja vali "Registreeru", et muuta külaliskonto püsivaks.</p>'
+    ? '<p class="help-text">Säilita külalisena kogutud progress, kasutades allolevat vormi või ava profiilimenüüst valik "Registreeru".</p>'
     : '';
 
   const guestRegisterPrompt = user.isGuest
-    ? `<section class="card guest-register-cta">
+    ? `<section class="card guest-register-cta" id="guest-register">
         <h3>Muuda oma külaliskonto püsivaks</h3>
-        <p class="help-text">Säilita külalisena kogutud progress, luues konto. Ava profiilimenüü või kasuta allolevat nuppu.</p>
-        <button type="button" class="button primary" data-open-register>Alusta registreerimist</button>
+        <p class="help-text">Täida vorm, et luua püsiv konto.<span class="guest-register-enhanced-note"> Skriptide korral saad avada ka eraldi registreerimisakna.</span></p>
+        <button type="button" class="button primary guest-register-trigger" data-open-register>Alusta registreerimist</button>
+        <div class="guest-register-inline">
+          <form method="POST" action="/register" data-password-form>
+            <label for="guest-register-username">Kasutajanimi</label>
+            <input
+              id="guest-register-username"
+              name="username"
+              required
+              minlength="3"
+              maxlength="12"
+              pattern="(?=.*[A-Za-zÀ-ÖØ-öø-ÿĀ-ž])[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]{3,12}"
+              title="Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest."
+              autocomplete="username"
+            />
+            <p class="availability-message" data-availability-username aria-live="polite"></p>
+            <label for="guest-register-email">E-posti aadress</label>
+            <input
+              id="guest-register-email"
+              name="email"
+              type="email"
+              required
+              maxlength="255"
+              autocomplete="email"
+            />
+            <p class="availability-message" data-availability-email aria-live="polite"></p>
+            <label for="guest-register-password">Parool</label>
+            <input
+              id="guest-register-password"
+              name="password"
+              type="password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              data-password-input
+            />
+            <div class="password-strength" data-password-strength>
+              <div class="password-strength-bar">
+                <span class="password-strength-fill" data-level="weak"></span>
+              </div>
+              <span class="password-strength-text">Sisesta parool, et näha tugevust</span>
+            </div>
+            <label for="guest-register-confirm">Kinnita parool</label>
+            <input
+              id="guest-register-confirm"
+              name="confirmPassword"
+              type="password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              data-password-confirm
+            />
+            <p class="password-match" data-password-match aria-live="polite"></p>
+            <button type="submit" class="button primary">Loo konto ja salvesta progress</button>
+          </form>
+        </div>
       </section>`
     : '';
 
