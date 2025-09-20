@@ -15,12 +15,123 @@ function renderFlash(flash) {
   return `<div class="flash ${typeClass}">${escapeHtml(flash.message)}</div>`;
 }
 
+function getUserInitial(username) {
+  if (!username) {
+    return '?';
+  }
+  const trimmed = username.trim();
+  if (!trimmed) {
+    return '?';
+  }
+  return trimmed.charAt(0).toUpperCase();
+}
+
+function renderNavLinks(user) {
+  if (!user) {
+    return '<div class="nav-actions"><a class="button secondary" href="/">Avaleht</a></div>';
+  }
+
+  const initial = escapeHtml(getUserInitial(user.username));
+  const username = escapeHtml(user.username || 'Mängija');
+  const roleLabel = user.isGuest ? 'Külaline' : 'Mängija';
+  const registerButton = user.isGuest
+    ? '<button type="button" class="nav-user-menu-button nav-user-register" data-open-register>Registreeru</button>'
+    : '';
+  const dropdownId = 'nav-user-menu';
+
+  return `<div class="nav-user" data-nav-user>
+    <button type="button" class="nav-user-toggle" data-nav-user-toggle aria-expanded="false" aria-haspopup="menu" aria-controls="${dropdownId}">
+      <span class="nav-user-avatar" aria-hidden="true">${initial}</span>
+      <span class="nav-user-name">${username}</span>
+      <span class="nav-user-caret" aria-hidden="true"></span>
+    </button>
+    <div class="nav-user-dropdown" id="${dropdownId}" data-nav-user-dropdown hidden>
+      <div class="nav-user-summary">
+        <span class="nav-user-avatar" aria-hidden="true">${initial}</span>
+        <div class="nav-user-details">
+          <span class="nav-user-name">${username}</span>
+          <span class="nav-user-role">${roleLabel}</span>
+        </div>
+      </div>
+      <div class="nav-user-divider" role="separator"></div>
+      <div class="nav-user-actions">
+        ${registerButton}
+        <form method="POST" action="/logout" class="nav-user-logout-form">
+          <button type="submit" class="nav-user-menu-button nav-user-logout">Logi välja</button>
+        </form>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderGuestRegisterModal() {
+  return `<div class="modal-backdrop" data-register-modal hidden>
+    <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="register-modal-title">
+      <section class="card modal-card">
+        <button type="button" class="modal-close" data-modal-close aria-label="Sulge registreerimisaken">&times;</button>
+        <h3 id="register-modal-title">Muuda oma külaliskonto püsivaks</h3>
+        <p class="help-text">Saad säilitada külalisena kogutud progressi, luues püsiva kasutaja.</p>
+        <form method="POST" action="/register" data-password-form>
+          <label for="upgrade-username">Kasutajanimi</label>
+          <input
+            id="upgrade-username"
+            name="username"
+            required
+            minlength="3"
+            maxlength="12"
+            pattern="(?=.*[A-Za-zÀ-ÖØ-öø-ÿĀ-ž])[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]{3,12}"
+            title="Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest."
+            autocomplete="username"
+            data-modal-focus
+          />
+          <p class="availability-message" data-availability-username aria-live="polite"></p>
+          <label for="upgrade-email">E-posti aadress</label>
+          <input
+            id="upgrade-email"
+            name="email"
+            type="email"
+            required
+            maxlength="255"
+            autocomplete="email"
+          />
+          <p class="availability-message" data-availability-email aria-live="polite"></p>
+          <label for="upgrade-password">Parool</label>
+          <input
+            id="upgrade-password"
+            name="password"
+            type="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            data-password-input
+          />
+          <div class="password-strength" data-password-strength>
+            <div class="password-strength-bar">
+              <span class="password-strength-fill" data-level="weak"></span>
+            </div>
+            <span class="password-strength-text">Sisesta parool, et näha tugevust</span>
+          </div>
+          <label for="upgrade-confirm">Kinnita parool</label>
+          <input
+            id="upgrade-confirm"
+            name="confirmPassword"
+            type="password"
+            required
+            minlength="8"
+            autocomplete="new-password"
+            data-password-confirm
+          />
+          <p class="password-match" data-password-match aria-live="polite"></p>
+          <button type="submit" class="button primary">Loo konto ja salvesta progress</button>
+        </form>
+      </section>
+    </div>
+  </div>`;
+}
+
 function layout({ title, body, user, flash }) {
-  const navLinks = user
-    ? `<div class="nav-user">Tere, ${escapeHtml(user.username)}${
-        user.isGuest ? ' (külaline)' : ''
-      }! <form method="POST" action="/logout" class="inline-form"><button type="submit">Logi välja</button></form></div>`
-    : '<div class="nav-user"><a href="/">Avaleht</a></div>';
+  const navLinks = renderNavLinks(user);
+  const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
   const passwordScript = `<script>
     (function () {
@@ -315,6 +426,144 @@ function layout({ title, body, user, flash }) {
         scheduleAvailabilityCheck();
       });
     })();
+
+    (function () {
+      const navUser = document.querySelector('[data-nav-user]');
+      if (!navUser) {
+        return;
+      }
+      const toggle = navUser.querySelector('[data-nav-user-toggle]');
+      const dropdown = navUser.querySelector('[data-nav-user-dropdown]');
+      if (!toggle || !dropdown) {
+        return;
+      }
+
+      let isOpen = false;
+
+      function openDropdown() {
+        if (isOpen) {
+          return;
+        }
+        isOpen = true;
+        dropdown.hidden = false;
+        navUser.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+
+      function closeDropdown() {
+        if (!isOpen) {
+          return;
+        }
+        isOpen = false;
+        dropdown.hidden = true;
+        navUser.classList.remove('is-open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+
+      toggle.addEventListener('click', function (event) {
+        event.stopPropagation();
+        if (isOpen) {
+          closeDropdown();
+        } else {
+          openDropdown();
+        }
+      });
+
+      navUser.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closeDropdown();
+          toggle.focus();
+        }
+      });
+
+      document.addEventListener('click', function (event) {
+        if (!navUser.contains(event.target)) {
+          closeDropdown();
+        }
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closeDropdown();
+        }
+      });
+
+      const registerTrigger = navUser.querySelector('[data-open-register]');
+      if (registerTrigger) {
+        registerTrigger.addEventListener('click', function () {
+          closeDropdown();
+        });
+      }
+    })();
+
+    (function () {
+      const modal = document.querySelector('[data-register-modal]');
+      if (!modal) {
+        return;
+      }
+      const triggers = document.querySelectorAll('[data-open-register]');
+      if (!triggers.length) {
+        return;
+      }
+      const closeButtons = modal.querySelectorAll('[data-modal-close]');
+      let lastFocusedElement = null;
+
+      function isModalOpen() {
+        return !modal.hasAttribute('hidden');
+      }
+
+      function openModal() {
+        if (isModalOpen()) {
+          return;
+        }
+        lastFocusedElement = document.activeElement;
+        modal.removeAttribute('hidden');
+        document.body.classList.add('modal-open');
+        const focusTarget =
+          modal.querySelector('[data-modal-focus]') ||
+          modal.querySelector('input, button, [href], select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (focusTarget && typeof focusTarget.focus === 'function') {
+          focusTarget.focus();
+        }
+      }
+
+      function closeModal() {
+        if (!isModalOpen()) {
+          return;
+        }
+        modal.setAttribute('hidden', '');
+        document.body.classList.remove('modal-open');
+        if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+          lastFocusedElement.focus();
+        }
+      }
+
+      triggers.forEach(function (trigger) {
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault();
+          openModal();
+        });
+      });
+
+      closeButtons.forEach(function (button) {
+        button.addEventListener('click', function (event) {
+          event.preventDefault();
+          closeModal();
+        });
+      });
+
+      modal.addEventListener('click', function (event) {
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+          closeModal();
+        }
+      });
+    })();
   </script>`;
 
   return `<!DOCTYPE html>
@@ -340,6 +589,7 @@ function layout({ title, body, user, flash }) {
   <footer class="site-footer">
     <p>&copy; ${new Date().getFullYear()} LegendIdle meeskond. See on varajane prototüüp, mis on loodud ideede testimiseks.</p>
   </footer>
+  ${guestRegisterModal}
   ${passwordScript}
 </body>
 </html>`;
@@ -469,68 +719,22 @@ function renderGame({ user, flash }) {
     </li>`;
   }).join('');
 
-  const guestRegister = user.isGuest
-    ? `<section class="card">
+  const guestMessage = user.isGuest
+    ? '<p class="help-text">Soovi korral ava üleval paremal profiilimenüü ja vali "Registreeru", et muuta külaliskonto püsivaks.</p>'
+    : '';
+
+  const guestRegisterPrompt = user.isGuest
+    ? `<section class="card guest-register-cta">
         <h3>Muuda oma külaliskonto püsivaks</h3>
-        <p>Saad säilitada kogu seni kogutud progressi, täites all oleva vormi.</p>
-        <form method="POST" action="/register" data-password-form>
-          <label for="upgrade-username">Kasutajanimi</label>
-          <input
-            id="upgrade-username"
-            name="username"
-            required
-            minlength="3"
-            maxlength="12"
-            pattern="(?=.*[A-Za-zÀ-ÖØ-öø-ÿĀ-ž])[A-Za-zÀ-ÖØ-öø-ÿĀ-ž0-9 _]{3,12}"
-            title="Kasutajanimi peab olema 3-12 märki, sisaldama vähemalt ühte tähte ning võib koosneda vaid tähtedest, numbritest, tühikutest ja alakriipsudest."
-            autocomplete="username"
-          />
-          <p class="availability-message" data-availability-username aria-live="polite"></p>
-          <label for="upgrade-email">E-posti aadress</label>
-          <input
-            id="upgrade-email"
-            name="email"
-            type="email"
-            required
-            maxlength="255"
-            autocomplete="email"
-          />
-          <p class="availability-message" data-availability-email aria-live="polite"></p>
-          <label for="upgrade-password">Parool</label>
-          <input
-            id="upgrade-password"
-            name="password"
-            type="password"
-            required
-            minlength="8"
-            autocomplete="new-password"
-            data-password-input
-          />
-          <div class="password-strength" data-password-strength>
-            <div class="password-strength-bar">
-              <span class="password-strength-fill" data-level="weak"></span>
-            </div>
-            <span class="password-strength-text">Sisesta parool, et näha tugevust</span>
-          </div>
-          <label for="upgrade-confirm">Kinnita parool</label>
-          <input
-            id="upgrade-confirm"
-            name="confirmPassword"
-            type="password"
-            required
-            minlength="8"
-            autocomplete="new-password"
-            data-password-confirm
-          />
-          <p class="password-match" data-password-match aria-live="polite"></p>
-          <button type="submit" class="button primary">Loo konto ja salvesta progress</button>
-        </form>
+        <p class="help-text">Säilita külalisena kogutud progress, luues konto. Ava profiilimenüü või kasuta allolevat nuppu.</p>
+        <button type="button" class="button primary" data-open-register>Alusta registreerimist</button>
       </section>`
     : '';
 
   const body = `<section class="card">
       <h2>Tere tulemast tagasi, ${escapeHtml(user.username)}${user.isGuest ? ' (külaline)' : ''}!</h2>
       <p>See on mängu prototüübi peavaade. Siin saad treenida oma oskusi, vaadata statistikat ning tulevikus ka võidelda teiste mängijatega.</p>
+      ${guestMessage}
     </section>
     <section class="card">
       <h3>Oskused</h3>
@@ -539,7 +743,7 @@ function renderGame({ user, flash }) {
       </ul>
       <p class="help-text">Iga treening tõstab vastava oskuse taset ühe võrra. Tulevikus lisanduvad ressursid, varustus ja võitlus.</p>
     </section>
-    ${guestRegister}`;
+    ${guestRegisterPrompt}`;
 
   return layout({ title: 'LegendIdle - Mäng', body, user, flash });
 }
