@@ -1,4 +1,7 @@
 :root {
+
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color-scheme: dark;
   color-scheme: light dark;
   --bg: #10131a;
   --bg-alt: #161b24;
@@ -6,6 +9,70 @@
   --accent-dark: #c78c1b;
   --text: #f5f6f8;
   --muted: #a0acc0;
+  --bg: #10131a;
+  --bg-alt: #161b24;
+  --body-gradient: radial-gradient(circle at top, rgba(240, 180, 41, 0.08), transparent 55%), var(--bg);
+  --surface: rgba(16, 19, 26, 0.65);
+  --surface-strong: rgba(16, 19, 26, 0.75);
+  --surface-soft: rgba(8, 11, 18, 0.55);
+  --surface-muted: rgba(8, 11, 18, 0.6);
+  --surface-muted-strong: rgba(8, 11, 18, 0.85);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --header-gradient: linear-gradient(135deg, rgba(240, 180, 41, 0.2), rgba(16, 19, 26, 0.8));
+  --button-bg: rgba(255, 255, 255, 0.08);
+  --button-bg-hover: rgba(255, 255, 255, 0.15);
+  --button-secondary-bg: rgba(60, 186, 146, 0.25);
+  --focus-ring: rgba(240, 180, 41, 0.6);
+  --hero-shadow: rgba(0, 0, 0, 0.25);
+  --card-shadow: rgba(0, 0, 0, 0.2);
+  --flash-success-surface: rgba(60, 186, 146, 0.15);
+  --flash-success-border: rgba(60, 186, 146, 0.4);
+  --flash-error-surface: rgba(217, 83, 79, 0.15);
+  --flash-error-border: rgba(217, 83, 79, 0.45);
+  --footer-bg: rgba(8, 11, 18, 0.8);
+  --skill-chip-bg: rgba(240, 180, 41, 0.25);
+  --skill-chip-text: var(--accent);
+  --input-bg: rgba(8, 11, 18, 0.6);
+  --input-bg-focus: rgba(8, 11, 18, 0.85);
+  --input-border: var(--border-strong);
+  --nav-divider: rgba(255, 255, 255, 0.12);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f7f9ff;
+  --bg-alt: #edf2ff;
+  --body-gradient: radial-gradient(circle at top, rgba(240, 180, 41, 0.18), transparent 60%), var(--bg);
+  --text: #1b2435;
+  --muted: #62708c;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-strong: rgba(255, 255, 255, 0.95);
+  --surface-soft: rgba(232, 238, 247, 0.75);
+  --surface-muted: rgba(255, 255, 255, 0.9);
+  --surface-muted-strong: rgba(255, 255, 255, 1);
+  --border: rgba(21, 40, 82, 0.12);
+  --border-strong: rgba(21, 40, 82, 0.2);
+  --border-subtle: rgba(21, 40, 82, 0.08);
+  --header-gradient: linear-gradient(135deg, rgba(240, 180, 41, 0.3), rgba(233, 238, 249, 0.95));
+  --button-bg: rgba(27, 36, 53, 0.08);
+  --button-bg-hover: rgba(27, 36, 53, 0.12);
+  --button-secondary-bg: rgba(60, 186, 146, 0.2);
+  --focus-ring: rgba(240, 180, 41, 0.45);
+  --hero-shadow: rgba(15, 23, 42, 0.12);
+  --card-shadow: rgba(15, 23, 42, 0.1);
+  --flash-success-surface: rgba(60, 186, 146, 0.1);
+  --flash-success-border: rgba(60, 186, 146, 0.32);
+  --flash-error-surface: rgba(217, 83, 79, 0.1);
+  --flash-error-border: rgba(217, 83, 79, 0.32);
+  --footer-bg: rgba(255, 255, 255, 0.92);
+  --skill-chip-bg: rgba(240, 180, 41, 0.18);
+  --skill-chip-text: #5c3b07;
+  --input-bg: rgba(255, 255, 255, 0.92);
+  --input-bg-focus: rgba(255, 255, 255, 1);
+  --input-border: var(--border);
+  --nav-divider: rgba(21, 40, 82, 0.16);
   --error: #d9534f;
   --success: #3cba92;
   font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -18,16 +85,44 @@
 body {
   margin: 0;
   min-height: 100vh;
+
+  background: var(--body-gradient);
+  background-color: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
   background: radial-gradient(circle at top, rgba(240, 180, 41, 0.08), transparent 55%), var(--bg);
   color: var(--text);
   display: flex;
   flex-direction: column;
+
 }
 
 .site-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  gap: clamp(1rem, 2vw, 2rem);
+  padding: 1.5rem clamp(1rem, 4vw, 3rem);
+  background: var(--header-gradient);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+
   padding: 1.5rem clamp(1rem, 4vw, 3rem);
   background: linear-gradient(135deg, rgba(240, 180, 41, 0.2), rgba(16, 19, 26, 0.8));
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -43,11 +138,68 @@ body {
   color: var(--muted);
 }
 
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text);
+}
+
 .nav-user {
   display: flex;
   gap: 0.75rem;
   align-items: center;
   color: var(--text);
+}
+
+
+.nav-user a {
+  color: inherit;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--button-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--button-bg-hover);
+  transform: translateY(-1px);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  display: block;
+}
+
+.theme-toggle .icon-sun,
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme='dark'] .theme-toggle .icon-moon {
+  display: block;
+}
+
+:root[data-theme='light'] .theme-toggle .icon-sun {
+  display: block;
 }
 
 .content-area {
@@ -61,6 +213,12 @@ body {
 }
 
 .hero {
+  background: var(--surface);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 40px var(--hero-shadow);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
   background: rgba(16, 19, 26, 0.65);
   padding: clamp(1.25rem, 3vw, 2rem);
   border-radius: 1rem;
@@ -82,6 +240,12 @@ body {
 }
 
 .card {
+  background: var(--surface-strong);
+  border-radius: 1rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px var(--card-shadow);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
   background: rgba(16, 19, 26, 0.75);
   border-radius: 1rem;
   padding: clamp(1.25rem, 3vw, 2rem);
@@ -104,6 +268,17 @@ input {
   width: 100%;
   padding: 0.6rem 0.75rem;
   border-radius: 0.6rem;
+  border: 1px solid var(--input-border);
+  margin-bottom: 0.9rem;
+  background: var(--input-bg);
+  color: var(--text);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input:focus {
+  outline: 2px solid var(--focus-ring);
+  border-color: var(--accent);
+  background: var(--input-bg-focus);
   border: 1px solid rgba(255, 255, 255, 0.12);
   margin-bottom: 0.9rem;
   background: rgba(8, 11, 18, 0.6);
@@ -123,6 +298,7 @@ input:focus {
 .password-strength-bar {
   height: 0.45rem;
   border-radius: 999px;
+  background: var(--border);
   background: rgba(255, 255, 255, 0.08);
   overflow: hidden;
   margin-bottom: 0.35rem;
@@ -147,6 +323,7 @@ input:focus {
 
 .password-strength-text {
   font-size: 0.85rem;
+  color: var(--muted);
   color: rgba(255, 255, 255, 0.75);
 }
 
@@ -154,6 +331,7 @@ input:focus {
   font-size: 0.85rem;
   margin: -0.35rem 0 0.85rem;
   min-height: 1.1rem;
+  color: var(--muted);
   color: rgba(255, 255, 255, 0.7);
 }
 
@@ -169,7 +347,11 @@ input:focus {
   font-size: 0.85rem;
   margin: 0.35rem 0 0.85rem;
   min-height: 1.1rem;
+
+  color: var(--muted);
+
   color: rgba(255, 255, 255, 0.7);
+
 }
 
 .availability-message:empty {
@@ -195,6 +377,9 @@ button {
   border-radius: 0.6rem;
   font-weight: 600;
   cursor: pointer;
+  background: var(--button-bg);
+  color: var(--text);
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
   transition: transform 0.15s ease, background 0.15s ease;
@@ -204,6 +389,7 @@ button {
 .button:hover,
 button:hover {
   transform: translateY(-1px);
+  background: var(--button-bg-hover);
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -217,6 +403,7 @@ button:hover {
 }
 
 .button.secondary {
+  background: var(--button-secondary-bg);
   background: rgba(60, 186, 146, 0.25);
   color: var(--text);
 }
@@ -259,6 +446,9 @@ button:disabled {
   align-items: center;
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border-subtle);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   background: rgba(8, 11, 18, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -267,6 +457,8 @@ button:disabled {
   display: inline-block;
   padding: 0.15rem 0.5rem;
   border-radius: 999px;
+  background: var(--skill-chip-bg);
+  color: var(--skill-chip-text);
   background: rgba(240, 180, 41, 0.25);
   color: var(--accent);
   font-size: 0.85rem;
@@ -278,6 +470,7 @@ button:disabled {
   border-radius: 0.75rem;
   font-weight: 600;
   border: 1px solid transparent;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .flash + .flash {
@@ -285,12 +478,19 @@ button:disabled {
 }
 
 .flash-success {
+
+  background: var(--flash-success-surface);
+  border-color: var(--flash-success-border);
+
   background: rgba(60, 186, 146, 0.15);
   border-color: rgba(60, 186, 146, 0.4);
+
   color: var(--text);
 }
 
 .flash-error {
+  background: var(--flash-error-surface);
+  border-color: var(--flash-error-border);
   background: rgba(217, 83, 79, 0.15);
   border-color: rgba(217, 83, 79, 0.45);
   color: var(--text);
@@ -301,11 +501,28 @@ button:disabled {
   padding: 1.5rem;
   color: var(--muted);
   font-size: 0.9rem;
+  border-top: 1px solid var(--border);
+  background: var(--footer-bg);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+@media (max-width: 600px) {
+  .site-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .site-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(8, 11, 18, 0.8);
 }
 
 @media (max-width: 600px) {
+
   .nav-user {
     flex-direction: column;
     align-items: flex-end;
