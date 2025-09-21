@@ -429,6 +429,19 @@ body:not(.js-enabled) .nav-user-divider {
   width: 100%;
 }
 
+.content-area--game {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: clamp(1rem, 3vw, 2.5rem) clamp(1.5rem, 6vw, 4.5rem);
+  display: grid;
+  gap: 1.75rem;
+}
+
+.content-area--game > * {
+  max-width: none;
+}
+
 .hero {
   background: var(--surface);
   padding: clamp(1.25rem, 3vw, 2rem);
@@ -732,6 +745,11 @@ body.js-enabled .guest-register-enhanced-note {
   margin-left: 0.75rem;
 }
 
+
+.page-layout {
+  width: 100%;
+}
+
 .game-layout {
   display: flex;
   gap: clamp(1.75rem, 4vw, 3rem);
@@ -740,7 +758,6 @@ body.js-enabled .guest-register-enhanced-note {
   max-width: 1080px;
   margin: 0 auto;
 }
-
 
 .game-main,
 .game-sidebar {
@@ -758,6 +775,23 @@ body.js-enabled .guest-register-enhanced-note {
   flex: 0 0 clamp(240px, 26vw, 320px);
   width: 100%;
   max-width: clamp(240px, 26vw, 320px);
+}
+
+
+.content-area--game .game-layout {
+  max-width: none;
+  margin: 0;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+
+.content-area--game .game-main {
+  flex: 1 1 clamp(600px, 58vw, 880px);
+  max-width: clamp(620px, 60vw, 920px);
+}
+
+.content-area--game .game-sidebar {
+  flex: 0 0 clamp(260px, 24vw, 340px);
+  max-width: clamp(260px, 24vw, 340px);
 }
 
 .equipment-card {
@@ -916,6 +950,17 @@ body.js-enabled .guest-register-enhanced-note {
     order: 2;
     flex: 1 1 auto;
     max-width: none;
+  }
+
+
+  .content-area--game .game-layout {
+    gap: 1.75rem;
+  }
+
+  .content-area--game .game-main,
+  .content-area--game .game-sidebar {
+    max-width: none;
+    flex: 1 1 auto;
   }
 }
 

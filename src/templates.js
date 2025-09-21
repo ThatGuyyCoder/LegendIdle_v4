@@ -204,7 +204,9 @@ function renderEquipmentIcon(name) {
   }
 }
 
-function layout({ title, body, user, flash, pageLayoutModifier = '' }) {
+
+function layout({ title, body, user, flash, contentClass }) {
+
   const navLinks = renderNavLinks(user);
   const guestRegisterModal = user && user.isGuest ? renderGuestRegisterModal() : '';
 
@@ -968,10 +970,13 @@ function layout({ title, body, user, flash, pageLayoutModifier = '' }) {
     })();
   </script>`;
 
-  const layoutClasses = ['page-layout'];
-  if (pageLayoutModifier) {
-    layoutClasses.push(pageLayoutModifier);
+
+  const mainClasses = ['content-area'];
+  if (contentClass) {
+    mainClasses.push(contentClass);
   }
+  const mainClassAttr = escapeHtml(mainClasses.join(' '));
+
 
   return `<!DOCTYPE html>
 <html lang="et" data-theme="dark">
@@ -993,12 +998,12 @@ function layout({ title, body, user, flash, pageLayoutModifier = '' }) {
       ${navLinks}
     </div>
   </header>
-  <div class="${layoutClasses.join(' ')}">
-    <main class="content-area">
-      ${renderFlash(flash)}
-      ${body}
-    </main>
-  </div>
+
+  <main class="${mainClassAttr}">
+    ${renderFlash(flash)}
+    ${body}
+  </main>
+
   <footer class="site-footer">
     <p>&copy; ${new Date().getFullYear()} LegendIdle meeskond. See on varajane prototüüp, mis on loodud ideede testimiseks.</p>
   </footer>
@@ -1186,7 +1191,9 @@ function renderGame({ user, flash }) {
     )
     .join('');
 
-  const body = `<div class="game-layout">
+
+  const body = `<div class="page-layout page-layout--sidebar-ready game-layout">
+
       <div class="game-main">
         <section class="card">
           <h2>Tere tulemast tagasi, ${escapeHtml(user.username)}${user.isGuest ? ' (külaline)' : ''}!</h2>
@@ -1219,13 +1226,8 @@ function renderGame({ user, flash }) {
       </aside>
     </div>`;
 
-  return layout({
-    title: 'LegendIdle - Mäng',
-    body,
-    user,
-    flash,
-    pageLayoutModifier: 'page-layout--sidebar-ready',
-  });
+  return layout({ title: 'LegendIdle - Mäng', body, user, flash, contentClass: 'content-area--game' });
+
 }
 
 module.exports = {
