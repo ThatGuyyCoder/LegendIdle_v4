@@ -413,6 +413,19 @@ body:not(.js-enabled) .nav-user-divider {
   margin: 0 auto;
 }
 
+.content-area--game {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: clamp(1rem, 3vw, 2.5rem) clamp(1.5rem, 6vw, 4.5rem);
+  display: grid;
+  gap: 1.75rem;
+}
+
+.content-area--game > * {
+  max-width: none;
+}
+
 .hero {
   background: var(--surface);
   padding: clamp(1.25rem, 3vw, 2rem);
@@ -716,6 +729,126 @@ body.js-enabled .guest-register-enhanced-note {
   margin-left: 0.75rem;
 }
 
+.page-layout {
+  width: 100%;
+}
+
+.page-layout--sidebar-ready {
+  display: flex;
+}
+
+.game-layout {
+  display: flex;
+  gap: clamp(1.75rem, 4vw, 3rem);
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.game-main,
+.game-sidebar {
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.game-main {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.game-sidebar {
+  flex: 0 0 clamp(240px, 26vw, 320px);
+  width: 100%;
+  max-width: clamp(240px, 26vw, 320px);
+}
+
+.content-area--game .game-layout {
+  max-width: none;
+  margin: 0;
+  gap: clamp(2.5rem, 6vw, 5rem);
+}
+
+.content-area--game .game-main {
+  flex: 1 1 clamp(600px, 58vw, 880px);
+  max-width: clamp(620px, 60vw, 920px);
+}
+
+.content-area--game .game-sidebar {
+  flex: 0 0 clamp(260px, 24vw, 340px);
+  max-width: clamp(260px, 24vw, 340px);
+}
+
+.equipment-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.equipment-subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.equipment-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.equipment-slot {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface-soft);
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.equipment-slot:hover {
+  border-color: var(--accent);
+  background: var(--surface-muted);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px var(--card-shadow);
+}
+
+.equipment-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  background: var(--surface-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.equipment-icon svg {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.equipment-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.equipment-label {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.equipment-empty {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .flash {
   padding: 0.75rem 1rem;
   border-radius: 0.75rem;
@@ -748,6 +881,29 @@ body.js-enabled .guest-register-enhanced-note {
   border-top: 1px solid var(--border);
   background: var(--footer-bg);
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+@media (max-width: 960px) {
+  .game-layout {
+    flex-direction: column;
+    max-width: none;
+  }
+
+  .game-sidebar {
+    order: 2;
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .content-area--game .game-layout {
+    gap: 1.75rem;
+  }
+
+  .content-area--game .game-main,
+  .content-area--game .game-sidebar {
+    max-width: none;
+    flex: 1 1 auto;
+  }
 }
 
 @media (max-width: 600px) {
